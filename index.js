@@ -1,85 +1,84 @@
-const Nightmare = require("nightmare");
+const TelegramBot = require("node-telegram-bot-api");
+require("dotenv").config();
+const startScraping = require("./parser.js");
 const favoriteProducts = require("./favorite-products");
 
-const URL =
-  "https://www.atbmarket.com/product/maska-dla-volossa-1l-kallos-pro-tox-cannabis-z-olieu-nasinna-konopli-keratta-vitamkompl";
+const token = process.env.BOT_API_TOKEN;
 
-const URL2 =
-  "https://www.atbmarket.com/product/sokolad-300g-molocnij-milka-z-nacinkou-zi-smakom-vanili-ta-pecivom-oreo";
+const bot = new TelegramBot(token, { polling: true });
 
-const urls = [URL, URL2];
-
-// const selector = "#productMain";
-// const selector = "#productMain data.product-price__top";
-const regularPriceSelector = "#productMain data.product-price__bottom";
-const actionPriceSelector = "#productMain data.product-price__top";
-const actionMarker = "#productMain data.product-price__bottom";
-const headerSelector = "#productMain h1.page-title";
-const actionProducts = [];
-
-// console.log(favoriteProducts);
-
-const parser = async ({ url }) => {
-  const nightmare = Nightmare();
-  const selector = "#productMain";
-
-  try {
-    const result = await nightmare
-      .goto(url)
-      .wait("body")
-      .evaluate((selector) => {
-        const isAction = document.querySelector(
-          "#productMain data.product-price__bottom"
-        );
-        console.log(isAction);
-        if (isAction) {
-          const title = document.querySelector(
-            "#productMain h1.page-title"
-          ).innerText;
-          const regularPrice = document.querySelector(
-            "#productMain data.product-price__bottom"
-          ).innerText;
-          const actionPrice = document.querySelector(
-            "#productMain data.product-price__top"
-          ).innerText;
-
-          console.log(
-            `Got action product: ${title}\n regular price: ${regularPrice}\n action price: ${actionPrice}`
-          );
-
-          const response = {
-            title: `${title}`,
-            regularPrice: `${regularPrice}`,
-            actionPrice: `${actionPrice}`,
-          };
-
-          return response;
-        }
-
-        throw new Error("No action");
-      }, selector)
-      .end()
-      .then((res) => {
-        // console.log("GOT ACTION PRODUCT!!!: ", res);
-        return Promise.resolve(res);
-      });
-
-    return { ...result, url };
-  } catch (error) {
-    // console.error("Search failed:", error.message);
-    return error.message;
+bot.on("message", (msg) => {
+  var Hi = "hi";
+  if (msg.text.toString().toLowerCase().indexOf(Hi) === 0) {
+    bot.sendMessage(msg.from.id, "Hello,  " + msg.from.first_name + " 👋");
   }
-};
 
-const startScraping = async (arr) => {
-  // setInterval(async () => {
-  try {
-    const results = await Promise.allSettled(arr.map(parser));
-    console.log("All instances finished:", results);
-  } catch (error) {
-    console.error("An error occurred:", error);
+  // var check = "check";
+  // if (msg.text.toString().toLowerCase().includes(check)) {
+  //   // const products = async (arr) => {
+  //   //   const res = await startScraping(arr);
+  //   //   return res;
+  //   // };
+  //   // const actionProducts = products(favoriteProducts);
+  //   // bot.sendMessage(msg.chat.id, `${actionProducts}`);
+
+  //   bot.sendMessage(msg.chat.id, "Hope to see you around again , Bye");
+  // }
+
+  var markup = "markup";
+  if (msg.text.toString().toLowerCase().indexOf(markup) === 0) {
+    bot.sendMessage(
+      msg.chat.id,
+      '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
+      { parse_mode: "HTML" }
+    );
   }
-  // }, 60000);
-};
 
-startScraping(favoriteProducts);
+  var location = "location";
+  if (msg.text.toString().toLowerCase().indexOf(location) === 0) {
+    bot.sendLocation(msg.chat.id, 44.97108, -104.27719);
+    bot.sendMessage(msg.chat.id, "Here is the point");
+  }
+});
+
+bot.onText(/\/start/, (msg) => {
+  bot.sendMessage(msg.chat.id, "Welcome", {
+    reply_markup: {
+      keyboard: [["Hi!", "Location"], ["Markup"]],
+      // ["Check"],
+    },
+  });
+});
+
+bot.onText(/\/check/, async (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    "🤖🔎 Ищу акционные товары из вашего списка, ожидайте..."
+  );
+
+  const res = await startScraping(favoriteProducts);
+
+  const actionProducts = res
+    .filter((prod) => prod.value !== "")
+    .map((prod) => {
+      const { title, regularPrice, actionPrice, atbCardPrice, url } =
+        prod.value;
+      return `✅ <b>${title}</b> \n 🔷Обычная цена: ${regularPrice} грн. \n ⚠️Цена по акции: ${actionPrice} \n ${
+        atbCardPrice !== "null"
+          ? "🔥Цена с карточкой АТБ: " + atbCardPrice + "грн.\n"
+          : ""
+      }🛒 ${url}`;
+    })
+    .join(" \n \n ");
+
+  // console.log(actionProducts);
+  bot.sendMessage(
+    msg.chat.id,
+    `Найдены следующие акционные товары: \n \n ${
+      actionProducts.length > 0
+        ? actionProducts
+        : "Акционных продуктов не найдено 🤷‍♂️"
+    }`,
+    { parse_mode: "HTML" }
+  );
+});
