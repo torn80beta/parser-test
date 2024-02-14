@@ -19,9 +19,10 @@ const actionProducts = [];
 
 // console.log(favoriteProducts);
 
-const parser = async ({ url }) => {
+const parser = async ({ url, id }) => {
   const nightmare = Nightmare();
   const selector = "#productMain";
+  // console.log("обработка страницы, ", id);
 
   try {
     const result = await nightmare
@@ -52,11 +53,10 @@ const parser = async ({ url }) => {
           if (atbCardPrice) {
             atbCardPrice = atbCardPrice.innerText;
           }
-          // .innerText;
 
-          console.log(
-            `Got action product: ${title}\n regular price: ${regularPrice}\n action price: ${actionPrice}\n ATB card price: ${atbCardPrice}`
-          );
+          // console.log(
+          //   `Got action product: ${title}\n regular price: ${regularPrice}\n action price: ${actionPrice}\n ATB card price: ${atbCardPrice}`
+          // );
 
           const response = {
             title: `${title}`,
@@ -76,9 +76,9 @@ const parser = async ({ url }) => {
         return Promise.resolve(res);
       });
 
-    return { ...result, url };
+    return { ...result, url, id };
   } catch (error) {
-    // console.error("Search failed:", error.message);
+    console.error("Search failed:", error.message);
     return error.message;
   }
 };
@@ -97,7 +97,4 @@ const startScraping = async (arr) => {
   // }, 60000);
 };
 
-// startScraping(favoriteProducts);
-
-// export default startScraping;
 module.exports = startScraping;
