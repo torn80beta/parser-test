@@ -1,24 +1,6 @@
 const Nightmare = require("nightmare");
 const favoriteProducts = require("./favorite-products");
 
-const URL =
-  "https://www.atbmarket.com/product/maska-dla-volossa-1l-kallos-pro-tox-cannabis-z-olieu-nasinna-konopli-keratta-vitamkompl";
-
-const URL2 =
-  "https://www.atbmarket.com/product/sokolad-300g-molocnij-milka-z-nacinkou-zi-smakom-vanili-ta-pecivom-oreo";
-
-const urls = [URL, URL2];
-
-// const selector = "#productMain";
-// const selector = "#productMain data.product-price__top";
-const regularPriceSelector = "#productMain data.product-price__bottom";
-const actionPriceSelector = "#productMain data.product-price__top";
-const actionMarker = "#productMain data.product-price__bottom";
-const headerSelector = "#productMain h1.page-title";
-const actionProducts = [];
-
-// console.log(favoriteProducts);
-
 const parser = async ({ url, id }) => {
   const nightmare = Nightmare();
   const selector = "#productMain";
@@ -36,6 +18,12 @@ const parser = async ({ url, id }) => {
         if (isAction) {
           const title = document.querySelector(
             "#productMain h1.page-title"
+          ).innerText;
+
+          const image = document.querySelector("#productMain picture img").src;
+
+          const code = document.querySelector(
+            "#productMain .custom-tag__text strong"
           ).innerText;
 
           const regularPrice = document.querySelector(
@@ -60,9 +48,11 @@ const parser = async ({ url, id }) => {
 
           const response = {
             title: `${title}`,
+            image: `${image}`,
             regularPrice: `${regularPrice}`,
             actionPrice: `${actionPrice}`,
             atbCardPrice: `${atbCardPrice}`,
+            productCode: code,
           };
 
           return response;
@@ -92,6 +82,7 @@ const startScraping = async (arr) => {
       "Search finished, ",
       results.filter((prod) => typeof prod.value === "object").length,
       " products found."
+      // results
     );
     return results;
     // return JSON.stringify(results, null, 2);

@@ -63,6 +63,7 @@ bot.on("callback_query", (msg) => {
       "🤖🔎 Ищу акционные товары из вашего списка, ожидайте..."
     );
     console.log(`Поиск товаров для пользователя ${msg.from.first_name}`);
+
     const user = data.find((user) => user.userId === msg.from.id);
 
     if (user.length === 0) {
@@ -72,11 +73,14 @@ bot.on("callback_query", (msg) => {
 
     const userFavoriteProducts = user.products;
 
-    const search = setTimeout(async () => {
+    const getProducts = setTimeout(async () => {
       const res = await startScraping(userFavoriteProducts);
 
-      const actionProducts = res
-        .filter((prod) => typeof prod.value === "object")
+      const actionProducts = res.filter(
+        (prod) => typeof prod.value === "object"
+      );
+
+      const message = actionProducts
         .map((prod) => {
           const { title, regularPrice, actionPrice, atbCardPrice, url, id } =
             prod.value;
@@ -88,40 +92,85 @@ bot.on("callback_query", (msg) => {
         })
         .join(" \n \n ");
 
+      const mediaGroup = await actionProducts.map((prod) => {
+        const {
+          image,
+          title,
+          regularPrice,
+          actionPrice,
+          atbCardPrice,
+          url,
+          id,
+        } = prod.value;
+        return {
+          type: "photo",
+          media: image,
+          caption: `✅ <b>${title}</b> \n💲 Обычная цена: ${regularPrice} грн \n❗️ Цена по акции: ${actionPrice} \n${
+            atbCardPrice !== "null"
+              ? "⭐️ Цена с карточкой АТБ: " + atbCardPrice + " грн ⭐️ \n"
+              : ""
+          }🪪 id товара: ${id} \n🛒 ${url}`,
+          parse_mode: "HTML",
+        };
+      });
+
       bot.sendMessage(
         msg.from.id,
         `${
           actionProducts.length > 0
-            ? "Найдены следующие акционные товары: \n \n " + actionProducts
-            : "Акционных товаров не найдено 🤷‍♂️"
+            ? "Найдены следующие акционные товары: \n \n "
+            : // + message
+              "Акционных товаров не найдено 🤷‍♂️"
         }`,
-        // { parse_mode: "markdown" }
-        { parse_mode: "HTML", disable_web_page_preview: false }
+        { parse_mode: "HTML", disable_web_page_preview: true }
+      );
+
+      bot.sendMediaGroup(
+        msg.from.id,
+        (media = mediaGroup)
+
+        // (media = [
+        //   {
+        //     type: "photo",
+        //     media:
+        //       "https://media.cnn.com/api/v1/images/stellar/prod/230719152236-04-how-to-stop-the-next-cuban-missile-crisis.jpg?c=16x9&q=h_720,w_1280,c_fill/f_webp",
+        //     thumbnail:
+        //       "https://www.atbmarket.com/product/sir-kislomolocnij-350-g-ukrainskij-nezirnij-pet",
+        //     caption: "test1",
+        //   },
+        //   {
+        //     type: "photo",
+        //     media:
+        //       "https://media.cnn.com/api/v1/images/stellar/prod/230719152208-03-how-to-stop-the-next-cuban-missile-crisis.jpg?c=16x9&q=h_720,w_1280,c_fill/f_webp",
+        //     thumbnail: "",
+        //     caption: "test2",
+        //     parse_mode: "HTML",
+        //     // has_spoiler: true,
+        //   },
+        // ])
       );
     }, 0);
-
-    // bot.sendPhoto(
-    //   msg.from.id,
-    //   "Эта кнопка еще в разработке, воспользуйтесь пожалуйста командой /check в меню."
-
-    //   // '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
-    //   // { parse_mode: "HTML" }
-    // );
   }
 });
 
 bot.onText(/\/start/, (msg) => {
-  console.log(msg);
+  // console.log(msg);
   const welcomeMessage = "Добро пожаловать, " + msg.from.first_name + "! 👋";
 
   bot.sendMessage(msg.chat.id, welcomeMessage, {
     reply_markup: {
       inline_keyboard: [
+        [{ text: "Регистрация", callback_data: "register" }],
         [
-          { text: "Регистрация!", callback_data: "register" },
-          // { text: "Проверить акционные товары", callback_data: "check" },
+          {
+            text: "🛒 Получить фото товаров",
+            callback_data: "check",
+          },
+          {
+            text: "🛒 Получить список товаров",
+            callback_data: "check2",
+          },
         ],
-        [{ text: "Проверить акционные товары.", callback_data: "check" }],
       ],
       // keyboard: [["Hi!", "Location"], ["Markup"]],
     },
