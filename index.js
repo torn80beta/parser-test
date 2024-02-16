@@ -160,7 +160,17 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, welcomeMessage, {
     reply_markup: {
       inline_keyboard: [
-        [{ text: "Регистрация", callback_data: "register" }],
+        [{ text: "📝  Мой список товаров", callback_data: "register" }],
+        [
+          {
+            text: "✅  Добавить товар",
+            callback_data: "add",
+          },
+          {
+            text: "❌  Удалить товар",
+            callback_data: "delete",
+          },
+        ],
         [
           {
             text: "🛒 Получить фото товаров",
