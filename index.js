@@ -96,7 +96,7 @@ bot.on("callback_query", (msg) => {
             : "Акционных товаров не найдено 🤷‍♂️"
         }`,
         // { parse_mode: "markdown" }
-        { parse_mode: "HTML", disable_web_page_preview: true }
+        { parse_mode: "HTML", disable_web_page_preview: false }
       );
     }, 0);
 
