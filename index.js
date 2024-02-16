@@ -104,15 +104,15 @@ bot.onText(/\/check/, (msg) => {
     const res = await startScraping(userFavoriteProducts);
 
     const actionProducts = res
-      .filter((prod) => prod.value !== "")
+      .filter((prod) => typeof prod.value === "object")
       .map((prod) => {
         const { title, regularPrice, actionPrice, atbCardPrice, url, id } =
           prod.value;
-        return `🪪 id товара: ${id} \n ✅ <b>${title}</b> \n 💲 Обычная цена: ${regularPrice} грн. \n ❗️ Цена по акции: ${actionPrice} \n ${
+        return `✅ <b>${title}</b> \n💲 Обычная цена: ${regularPrice} грн \n❗️ Цена по акции: ${actionPrice} \n${
           atbCardPrice !== "null"
-            ? "🔥 Цена с карточкой АТБ: " + atbCardPrice + "грн.\n"
+            ? "⭐️ Цена с карточкой АТБ: " + atbCardPrice + " грн ⭐️ \n"
             : ""
-        }🛒 ${url}`;
+        }🪪 id товара: ${id} \n🛒 ${url}`;
       })
       .join(" \n \n ");
 

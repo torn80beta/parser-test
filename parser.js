@@ -68,7 +68,7 @@ const parser = async ({ url, id }) => {
           return response;
         }
 
-        throw new Error("");
+        throw new Error();
       }, selector)
       .end()
       .then((res) => {
@@ -78,7 +78,7 @@ const parser = async ({ url, id }) => {
 
     return { ...result, url, id };
   } catch (error) {
-    console.error("Search failed:", error.message);
+    // console.error("Search failed:", error.message);
     return error.message;
   }
 };
@@ -87,7 +87,8 @@ const startScraping = async (arr) => {
   // setInterval(async () => {
   try {
     const results = await Promise.allSettled(arr.map(parser));
-    console.log("All instances finished:", results);
+    // console.log("All instances finished:", results);
+    console.log("Поиск завершен", results);
     return results;
     // return JSON.stringify(results, null, 2);
   } catch (error) {
