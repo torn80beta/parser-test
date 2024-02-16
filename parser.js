@@ -88,7 +88,11 @@ const startScraping = async (arr) => {
   try {
     const results = await Promise.allSettled(arr.map(parser));
     // console.log("All instances finished:", results);
-    console.log("Поиск завершен", results);
+    console.log(
+      "Search finished, ",
+      results.filter((prod) => typeof prod.value === "object").length,
+      " products found."
+    );
     return results;
     // return JSON.stringify(results, null, 2);
   } catch (error) {

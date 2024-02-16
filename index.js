@@ -7,28 +7,28 @@ const token = process.env.BOT_API_TOKEN;
 
 const bot = new TelegramBot(token, { polling: true });
 
-bot.on("message", (msg) => {
-  var Hi = "hi";
-  if (msg.text.toString().toLowerCase().indexOf(Hi) === 0) {
-    console.log(msg.from);
-    bot.sendMessage(msg.from.id, "Hello,  " + msg.from.first_name + " 👋");
-  }
+// bot.on("message", (msg) => {
+//   var Hi = "hi";
+//   if (msg.text.toString().toLowerCase().indexOf(Hi) === 0) {
+//     console.log(msg.from);
+//     bot.sendMessage(msg.from.id, "Hello,  " + msg.from.first_name + " 👋");
+//   }
 
-  var markup = "markup";
-  if (msg.text.toString().toLowerCase().indexOf(markup) === 0) {
-    bot.sendMessage(
-      msg.chat.id,
-      '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
-      { parse_mode: "HTML" }
-    );
-  }
+//   var markup = "markup";
+//   if (msg.text.toString().toLowerCase().indexOf(markup) === 0) {
+//     bot.sendMessage(
+//       msg.chat.id,
+//       '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
+//       { parse_mode: "HTML" }
+//     );
+//   }
 
-  var location = "location";
-  if (msg.text.toString().toLowerCase().indexOf(location) === 0) {
-    bot.sendLocation(msg.chat.id, 44.97108, -104.27719);
-    bot.sendMessage(msg.chat.id, "Here is the point");
-  }
-});
+//   var location = "location";
+//   if (msg.text.toString().toLowerCase().indexOf(location) === 0) {
+//     bot.sendLocation(msg.chat.id, 44.97108, -104.27719);
+//     bot.sendMessage(msg.chat.id, "Here is the point");
+//   }
+// });
 
 bot.on("callback_query", (msg) => {
   console.log(msg);
@@ -60,9 +60,53 @@ bot.on("callback_query", (msg) => {
   if (msg.data === "check") {
     bot.sendMessage(
       msg.from.id,
-      '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
-      { parse_mode: "HTML" }
+      "🤖🔎 Ищу акционные товары из вашего списка, ожидайте..."
     );
+    console.log(`Поиск товаров для пользователя ${msg.from.first_name}`);
+    const user = data.find((user) => user.userId === msg.from.id);
+
+    if (user.length === 0) {
+      bot.sendMessage(msg.from.id, "❌ Вы не авторизованы");
+      return;
+    }
+
+    const userFavoriteProducts = user.products;
+
+    const search = setTimeout(async () => {
+      const res = await startScraping(userFavoriteProducts);
+
+      const actionProducts = res
+        .filter((prod) => typeof prod.value === "object")
+        .map((prod) => {
+          const { title, regularPrice, actionPrice, atbCardPrice, url, id } =
+            prod.value;
+          return `✅ <b>${title}</b> \n💲 Обычная цена: ${regularPrice} грн \n❗️ Цена по акции: ${actionPrice} \n${
+            atbCardPrice !== "null"
+              ? "⭐️ Цена с карточкой АТБ: " + atbCardPrice + " грн ⭐️ \n"
+              : ""
+          }🪪 id товара: ${id} \n🛒 ${url}`;
+        })
+        .join(" \n \n ");
+
+      bot.sendMessage(
+        msg.from.id,
+        `${
+          actionProducts.length > 0
+            ? "Найдены следующие акционные товары: \n \n " + actionProducts
+            : "Акционных товаров не найдено 🤷‍♂️"
+        }`,
+        // { parse_mode: "markdown" }
+        { parse_mode: "HTML", disable_web_page_preview: true }
+      );
+    }, 0);
+
+    // bot.sendPhoto(
+    //   msg.from.id,
+    //   "Эта кнопка еще в разработке, воспользуйтесь пожалуйста командой /check в меню."
+
+    //   // '<b>bold</b> \n <i>italic</i> \n <em>italic with em</em> \n <a href="http://www.example.com/">inline URL</a> \n <code>inline fixed-width code</code> \n <pre>pre-formatted fixed-width code block</pre>',
+    //   // { parse_mode: "HTML" }
+    // );
   }
 });
 
@@ -123,7 +167,8 @@ bot.onText(/\/check/, (msg) => {
           ? "Найдены следующие акционные товары: \n \n " + actionProducts
           : "Акционных товаров не найдено 🤷‍♂️"
       }`,
-      { parse_mode: "HTML" }
+      // { parse_mode: "markdown" }
+      { parse_mode: "HTML", disable_web_page_preview: true }
     );
   }, 0);
 });
