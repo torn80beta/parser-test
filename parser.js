@@ -1,7 +1,7 @@
 const Nightmare = require("nightmare");
 const favoriteProducts = require("./favorite-products");
 
-const parser = async ({ url, id }) => {
+const parser = async ({ url }) => {
   const nightmare = Nightmare();
   const selector = "#productMain";
   // console.log("обработка страницы, ", id);
@@ -9,7 +9,8 @@ const parser = async ({ url, id }) => {
   try {
     const result = await nightmare
       .goto(url)
-      .wait("body")
+      .wait("#productMain")
+      // .wait("body")
       .evaluate((selector) => {
         const isAction = document.querySelector(
           "#productMain data.product-price__bottom"
@@ -58,15 +59,15 @@ const parser = async ({ url, id }) => {
           return response;
         }
 
-        throw new Error();
+        throw new Error("no action");
       }, selector)
-      .end()
+      .end(() => "Process completed")
       .then((res) => {
-        // console.log("GOT ACTION PRODUCT!!!: ", res);
+        console.log("GOT ACTION PRODUCT!!!: ", res);
         return Promise.resolve(res);
       });
 
-    return { ...result, url, id };
+    return { ...result, url };
   } catch (error) {
     // console.error("Search failed:", error.message);
     return error.message;
