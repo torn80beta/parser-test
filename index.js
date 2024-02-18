@@ -1,7 +1,7 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
-const startScraping = require("./parser.js");
-const data = require("./favorite-products");
+const parser = require("./parser.js");
+const data = require("./data.js");
 
 const token = process.env.BOT_API_TOKEN;
 
@@ -47,11 +47,14 @@ bot.on("callback_query", (msg) => {
     const userFavoriteProducts = user.products;
 
     const getProducts = setTimeout(async () => {
-      const res = await startScraping(userFavoriteProducts);
+      // const res = await startScraping(userFavoriteProducts);
+      const res = await Promise.allSettled(userFavoriteProducts.map(parser));
 
-      const actionProducts = res.filter(
-        (prod) => typeof prod.value === "object"
-      );
+      // const actionProducts = res.filter(
+      //   (prod) => typeof prod.value === "object"
+      // );
+
+      const actionProducts = res.filter((prod) => prod.value.action);
 
       const mediaGroup = await actionProducts.map((prod) => {
         const {
@@ -114,12 +117,10 @@ bot.on("callback_query", (msg) => {
 
     const userFavoriteProducts = user.products;
 
-    const getProducts = setTimeout(async () => {
-      const res = await startScraping(userFavoriteProducts);
-
-      const actionProducts = res.filter(
-        (prod) => typeof prod.value === "object"
-      );
+    setTimeout(async () => {
+      const res = await Promise.allSettled(userFavoriteProducts.map(parser));
+      console.log(res);
+      const actionProducts = res.filter((prod) => prod.value.action);
 
       const message = actionProducts
         .map((prod) => {
@@ -131,6 +132,7 @@ bot.on("callback_query", (msg) => {
             url,
             productCode,
           } = prod.value;
+
           return `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} \n${
             atbCardPrice !== "null"
               ? "⭐️ Ціна з карткою АТБ: " + atbCardPrice + " грн ⭐️ \n"
@@ -149,7 +151,6 @@ bot.on("callback_query", (msg) => {
         }`,
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
-      return;
     }, 0);
   }
 
