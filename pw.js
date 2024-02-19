@@ -107,8 +107,13 @@ const parser = async ({ url }) => {
   });
 
   // console.log({ ...productMain, url });
-  // await page.waitForTimeout(100); // wait
   await browser.close();
+  // console.log({ ...productMain, url });
+  // console.log("Browser closed!!!");
+  return { ...productMain, url };
+
+  // await page.waitForTimeout(100); // wait
+  // await browser.close();
 };
 
 // const res = await Promise.allSettled(
@@ -126,14 +131,18 @@ const parser = async ({ url }) => {
 // const favProd = data[1].products;
 
 const getProducts = async (arr) => {
-  const resp = await arr.map(async (el) => {
-    const r = await parser(el);
-    return r;
-  });
+  const resp = await Promise.allSettled(
+    arr.map(async (el) => {
+      const r = await parser(el);
+      // console.log(r);
+      return r;
+    })
+  );
   // console.log(resp);
   return resp;
 };
 
 // getProducts(favProd);
 
-module.exports = parser;
+// module.exports = parser;
+module.exports = getProducts;

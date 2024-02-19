@@ -1,7 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 // const parser = require("./parser.js");
-const parser = require("./pw.js");
+// const parser = require("./pw.js");
+const getProducts = require("./pw.js");
 const data = require("./data.js");
 // const Nightmare = require("nightmare");
 
@@ -48,23 +49,9 @@ bot.on("callback_query", (msg) => {
 
     const userFavoriteProducts = user.products;
 
-    // const getProducts = setTimeout(async () => {
-    // const res = await startScraping(userFavoriteProducts);
-    // const res = await Promise.allSettled(userFavoriteProducts.map(parser));
     setTimeout(async () => {
-      const res = await Promise.allSettled(
-        userFavoriteProducts.map(async (el) => {
-          // const nightmare = new Nightmare({});
-          const resp = await parser(el);
-          // await nightmare.end();
-          console.log(resp);
-          return resp;
-        })
-      );
-
-      // const actionProducts = res.filter(
-      //   (prod) => typeof prod.value === "object"
-      // );
+      const res = await getProducts(userFavoriteProducts);
+      // console.log(res);
 
       const actionProducts = res.filter((prod) => prod.value.action);
 
@@ -130,41 +117,9 @@ bot.on("callback_query", (msg) => {
     const userFavoriteProducts = user.products;
 
     setTimeout(async () => {
-      // const res = await Promise.allSettled(
-      const res = userFavoriteProducts.map(async (el) => {
-        const resp = await parser(el);
-        console.log(resp);
-        return resp;
-      });
-      // );
-      // async (el) => {
-      // // const nightmare = new Nightmare({});
-      // const resp = await parser(el);
-      // // await nightmare.end();
-      // console.log(resp);
-      // return resp;
-      // }
-      //   )
-      // );
-
-      // const res = await Promise.allSettled(getProducts(userFavoriteProducts));
-
-      // const res = await Promise.allSettled(
-      //   userFavoriteProducts.map(async (el) => {
-      //     // const nightmare = new Nightmare({});
-      //     const resp = await parser(el);
-      //     // await nightmare.end();
-      //     // console.log(resp);
-      //     return resp;
-      //   })
-      // );
-      // const res = userFavoriteProducts.map(async (el) => {
-      //   const resp = await parser(el);
-      //   // console.log(resp);
-      //   return resp;
-      // });
-
+      const res = await getProducts(userFavoriteProducts);
       console.log(res);
+
       const actionProducts = res.filter((prod) => prod.value.action);
 
       const message = actionProducts
