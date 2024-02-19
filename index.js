@@ -1,10 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 // const parser = require("./parser.js");
-// const parser = require("./pw.js");
 const getProducts = require("./pw.js");
 const data = require("./data.js");
-// const Nightmare = require("nightmare");
 
 const token = process.env.BOT_API_TOKEN;
 
@@ -88,7 +86,9 @@ bot.on("callback_query", (msg) => {
       );
 
       bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
-      return;
+      console.log(
+        `Process completed for user ${msg.from.first_name}, ${actionProducts.length} products found.`
+      );
     }, 0);
   }
 
@@ -118,7 +118,7 @@ bot.on("callback_query", (msg) => {
 
     setTimeout(async () => {
       const res = await getProducts(userFavoriteProducts);
-      console.log(res);
+      // console.log(res);
 
       const actionProducts = res.filter((prod) => prod.value.action);
 
@@ -150,6 +150,10 @@ bot.on("callback_query", (msg) => {
             : "Пошук завершено, акційних товарів за вашим списком не знайдено 🤷‍♂️"
         }`,
         { parse_mode: "HTML", disable_web_page_preview: true }
+      );
+
+      console.log(
+        `Process completed for user ${msg.from.first_name}, ${actionProducts.length} products found.`
       );
     }, 0);
   }

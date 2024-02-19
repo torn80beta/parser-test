@@ -1,55 +1,4 @@
 const playwright = require("playwright");
-// async function main() {
-//   const browser = await playwright.chromium.launch({
-//     headless: true, // set this to true
-//   });
-
-//   const page = await browser.newPage();
-//   await page.goto("https://finance.yahoo.com/world-indices");
-//   const market = await page.$eval("#YDC-Lead-Stack-Composite", (headerElm) => {
-//     const data = [];
-//     const listElms = headerElm.getElementsByTagName("li");
-//     Array.from(listElms).forEach((elm) => {
-//       data.push(elm.innerText.split("\n"));
-//     });
-//     return data;
-//   });
-
-//   console.log("Market Composites--->>>>", market);
-//   await page.waitForTimeout(5000); // wait
-//   await browser.close();
-// }
-
-// main();
-
-// async function mostActive() {
-//   const browser = await playwright.chromium.launch({
-//     headless: true, // set this to true
-//   });
-
-//   const page = await browser.newPage();
-//   await page.goto("https://finance.yahoo.com/most-active?count=100");
-//   const mostActive = await page.$eval(
-//     "#fin-scr-res-table tbody",
-//     (tableBody) => {
-//       let all = [];
-//       for (let i = 0, row; (row = tableBody.rows[i]); i++) {
-//         let stock = [];
-//         for (let j = 0, col; (col = row.cells[j]); j++) {
-//           stock.push(row.cells[j].innerText);
-//         }
-//         all.push(stock);
-//       }
-//       return all;
-//     }
-//   );
-
-//   console.log("Most Active", mostActive);
-//   await page.waitForTimeout(30000); // wait
-//   await browser.close();
-// }
-
-// mostActive();
 
 const parser = async ({ url }) => {
   const browser = await playwright.firefox.launch({
@@ -57,7 +6,14 @@ const parser = async ({ url }) => {
   });
 
   const page = await browser.newPage();
-  await page.goto(url);
+
+  try {
+    await page.goto(url);
+  } catch (error) {
+    console.log(error.message);
+    await browser.close();
+    return error.message;
+  }
 
   const productMain = await page.$eval("#productMain", (productMain) => {
     const isAction = document.querySelector(
@@ -69,6 +25,7 @@ const parser = async ({ url }) => {
         action: false,
       };
     }
+
     const title = document.querySelector("h1.page-title").innerText;
 
     const image = document.querySelector("#productMain picture img").src;
@@ -108,41 +65,22 @@ const parser = async ({ url }) => {
 
   // console.log({ ...productMain, url });
   await browser.close();
-  // console.log({ ...productMain, url });
-  // console.log("Browser closed!!!");
   return { ...productMain, url };
 
   // await page.waitForTimeout(100); // wait
-  // await browser.close();
 };
-
-// const res = await Promise.allSettled(
-//   userFavoriteProducts.map(async (el) => {
-//     const nightmare = new Nightmare({});
-//     const resp = await parser(el, nightmare);
-//     await nightmare.end();
-//     // console.log(resp);
-//     return resp;
-//   })
-// );
-
-// const data = require("./data.js");
-
-// const favProd = data[1].products;
-
 const getProducts = async (arr) => {
   const resp = await Promise.allSettled(
     arr.map(async (el) => {
-      const r = await parser(el);
-      // console.log(r);
-      return r;
+      try {
+        const r = await parser(el);
+        return r;
+      } catch (error) {
+        return { action: false, error };
+      }
     })
   );
-  // console.log(resp);
   return resp;
 };
 
-// getProducts(favProd);
-
-// module.exports = parser;
 module.exports = getProducts;
