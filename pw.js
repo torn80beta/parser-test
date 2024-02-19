@@ -1,7 +1,7 @@
 const playwright = require("playwright");
 
 const parser = async ({ url }) => {
-  const browser = await playwright.webkit.launch({
+  const browser = await playwright.firefox.launch({
     headless: true,
   });
 
