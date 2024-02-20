@@ -3,6 +3,7 @@ require("dotenv").config();
 // const parser = require("./parser.js");
 // const getProducts = require("./pw.js");
 const getProducts = require("./cheerio.js");
+const format = require("date-fns").format;
 const data = require("./data.js");
 
 const token = process.env.BOT_API_TOKEN;
@@ -44,6 +45,9 @@ bot.on("callback_query", (msg) => {
       msg.from.id,
       "🤖🔎 Пошук акційних товарів за списком, очикуйте..."
     );
+
+    const startDate = new Date();
+
     console.log(`User ${msg.from.first_name} looking for products by photo...`);
 
     const userFavoriteProducts = user.products;
@@ -67,7 +71,7 @@ bot.on("callback_query", (msg) => {
         return {
           type: "photo",
           media: image,
-          caption: `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} \n${
+          caption: `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} грн \n${
             atbCardPrice !== "null"
               ? "⭐️ Ціна з карткою АТБ: " + atbCardPrice + " грн ⭐️ \n"
               : ""
@@ -76,11 +80,23 @@ bot.on("callback_query", (msg) => {
         };
       });
 
-      bot.sendMessage(
+      const endDate = new Date();
+
+      const diffTime = Math.abs(endDate - startDate);
+      const isMinute =
+        format(diffTime, "mm") === "00"
+          ? ""
+          : `<b>${format(diffTime, "mm")}<b> хвилин. : `;
+
+      const calculateTimeMessage = `${
+        isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " секунд"
+      }`;
+
+      await bot.sendMessage(
         msg.from.id,
         `${
           actionProducts.length > 0
-            ? "Пошук завершено, знайдені наступні акційні товари: \n \n "
+            ? `Пошук завершено за ${calculateTimeMessage}. \nОброблено <b>${userFavoriteProducts.length}</b> товарів. Знайдені наступні акційні товари: \n \n `
             : "Пошук завершено, акційних товарів за вашим списком не знайдено 🤷‍♂️"
         }`,
         { parse_mode: "HTML", disable_web_page_preview: true }
@@ -88,7 +104,12 @@ bot.on("callback_query", (msg) => {
 
       bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
       console.log(
-        `Process completed for user ${msg.from.first_name}, ${actionProducts.length} products found.`
+        `Process completed for user ${msg.from.first_name} in ${format(
+          diffTime,
+          "mm:ss"
+        )}, ${userFavoriteProducts.length} were processed. ${
+          actionProducts.length
+        } products found.`
       );
     }, 0);
   }
@@ -113,6 +134,9 @@ bot.on("callback_query", (msg) => {
       msg.from.id,
       "🤖🔎 Пошук акційних товарів за списком, очикуйте..."
     );
+
+    const startDate = new Date();
+
     console.log(`User ${msg.from.first_name} looking for products by list...`);
 
     const userFavoriteProducts = user.products;
@@ -134,7 +158,7 @@ bot.on("callback_query", (msg) => {
             productCode,
           } = prod.value;
 
-          return `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} \n${
+          return `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} грн \n${
             atbCardPrice !== "null"
               ? "⭐️ Ціна з карткою АТБ: " + atbCardPrice + " грн ⭐️ \n"
               : ""
@@ -142,11 +166,24 @@ bot.on("callback_query", (msg) => {
         })
         .join("\n \n");
 
-      bot.sendMessage(
+      const endDate = new Date();
+
+      const diffTime = Math.abs(endDate - startDate);
+
+      const isMinute =
+        format(diffTime, "mm") === "00"
+          ? ""
+          : `<b>${format(diffTime, "mm")}<b> хвилин. : `;
+
+      const calculateTimeMessage = `${
+        isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " секунд"
+      }`;
+
+      await bot.sendMessage(
         msg.from.id,
         `${
           actionProducts.length > 0
-            ? "Пошук завершено, знайдені наступні акційні товари: \n \n" +
+            ? `Пошук завершено за ${calculateTimeMessage}. \nОброблено <b>${userFavoriteProducts.length}</b> товарів. Знайдені наступні акційні товари: \n \n ` +
               message
             : "Пошук завершено, акційних товарів за вашим списком не знайдено 🤷‍♂️"
         }`,
@@ -154,7 +191,12 @@ bot.on("callback_query", (msg) => {
       );
 
       console.log(
-        `Process completed for user ${msg.from.first_name}, ${actionProducts.length} products found.`
+        `Process completed for user ${msg.from.first_name} in ${format(
+          diffTime,
+          "mm:ss"
+        )}, ${userFavoriteProducts.length} were processed. ${
+          actionProducts.length
+        } products found.`
       );
     }, 0);
   }

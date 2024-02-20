@@ -29,7 +29,9 @@ async function parser({ url }) {
   const image = $("#productMain picture img").attr("src");
   const code = $("#productMain .custom-tag__text strong").text();
   const regularPrice = $("#productMain data.product-price__bottom span").text();
-  const actionPrice = $("#productMain data.product-price__top span").text();
+  const actionPrice = parseFloat(
+    $("#productMain data.product-price__top").text().trim()
+  ).toFixed(2);
   const atbCardPriceSelector = $(
     "#productMain data.atbcard-sale__price-top span"
   ).text();
@@ -65,7 +67,7 @@ const getProducts = async (arr) => {
       }
     })
   );
-  console.log(resp);
+  // console.log(resp);
   return resp;
 };
 
