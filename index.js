@@ -1,7 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 // const parser = require("./parser.js");
-const getProducts = require("./pw.js");
+// const getProducts = require("./pw.js");
+const getProducts = require("./cheerio.js");
 const data = require("./data.js");
 
 const token = process.env.BOT_API_TOKEN;
