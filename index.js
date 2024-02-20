@@ -48,7 +48,11 @@ bot.on("callback_query", (msg) => {
 
     const startDate = new Date();
 
-    console.log(`User ${msg.from.first_name} looking for products by photo...`);
+    console.log(
+      `${format(startDate, "HH:mm:ss")} User ${
+        msg.from.first_name
+      } looking for products by photo...`
+    );
 
     const userFavoriteProducts = user.products;
 
@@ -137,7 +141,11 @@ bot.on("callback_query", (msg) => {
 
     const startDate = new Date();
 
-    console.log(`User ${msg.from.first_name} looking for products by list...`);
+    console.log(
+      `${format(startDate, "HH:mm:ss")} User ${
+        msg.from.first_name
+      } looking for products by list...`
+    );
 
     const userFavoriteProducts = user.products;
 
