@@ -71,4 +71,14 @@ const getProducts = async (arr) => {
   return resp;
 };
 
-module.exports = getProducts;
+const getSingleProduct = async (url) => {
+  try {
+    const r = await parser(el);
+    return r;
+  } catch (error) {
+    return { action: false, error };
+  }
+  // console.log(resp);
+};
+
+module.exports = { getProducts, getSingleProduct };
