@@ -10,7 +10,7 @@ const axiosOptions = {
   },
 };
 
-async function parser({ url }) {
+async function parser({ url, isUserListElement }) {
   const html = await axios.get(url, axiosOptions).catch((error) => {
     console.error(error);
   });
@@ -19,7 +19,7 @@ async function parser({ url }) {
 
   const isAction = $("#productMain data.product-price__bottom span").text();
 
-  if (!isAction) {
+  if (!isAction && isUserListElement) {
     return {
       action: false,
     };
@@ -28,16 +28,29 @@ async function parser({ url }) {
   const title = $("h1.page-title").text();
   const image = $("#productMain picture img").attr("src");
   const code = $("#productMain .custom-tag__text strong").text();
-  const regularPrice = $("#productMain data.product-price__bottom span").text();
-  const actionPrice = parseFloat(
-    $("#productMain data.product-price__top").text().trim()
-  ).toFixed(2);
+
+  const regularPrice = isAction
+    ? $("#productMain data.product-price__bottom span").text()
+    : parseFloat(
+        $("#productMain data.product-price__top").text().trim()
+      ).toFixed(2);
+
+  const actionPrice =
+    isAction && isUserListElement
+      ? parseFloat(
+          $("#productMain data.product-price__top").text().trim()
+        ).toFixed(2)
+      : null;
+
+  // const actionPrice = actionPriceSelector ? actionPriceSelector : null;
+
   const atbCardPriceSelector = $(
     "#productMain data.atbcard-sale__price-top span"
   ).text();
+
   let atbCardPrice;
 
-  if (!atbCardPriceSelector) {
+  if (!atbCardPriceSelector || !isUserListElement) {
     atbCardPrice = null;
   } else {
     atbCardPrice = atbCardPriceSelector;
@@ -60,7 +73,7 @@ const getProducts = async (arr) => {
   const resp = await Promise.allSettled(
     arr.map(async (el) => {
       try {
-        const r = await parser(el);
+        const r = await parser({ ...el, isUserListElement: true });
         return r;
       } catch (error) {
         return { action: false, error };
@@ -73,12 +86,11 @@ const getProducts = async (arr) => {
 
 const getSingleProduct = async (url) => {
   try {
-    const r = await parser(el);
+    const r = await parser({ url, isUserListElement: false });
     return r;
   } catch (error) {
     return { action: false, error };
   }
-  // console.log(resp);
 };
 
 module.exports = { getProducts, getSingleProduct };

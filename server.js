@@ -2,10 +2,11 @@ const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 // const parser = require("./parser.js");
 // const getProducts = require("./pw.js");
-const { getProducts, addProduct } = require("./cheerio.js");
+const { getProducts } = require("./cheerio.js");
 const format = require("date-fns").format;
 const mongoose = require("mongoose");
-const addUser = require("./lib/actions/addUser.js");
+const { addUser, addProduct } = require("./lib/actions");
+const { createMediaGroup } = require("./lib/bot");
 
 const data = require("./data.js");
 
@@ -234,7 +235,7 @@ bot.on("callback_query", async (msg) => {
     const telegramUserId = msg.from.id;
 
     const user = await addUser({ name, telegramUserId });
-    console.log(user);
+    // console.log(user);
     // if (user.status === 409) {
     //   await bot.sendMessage(msg.from.id, "🤖 Ви вже зареєстровані");
     // }
@@ -254,12 +255,23 @@ bot.on("callback_query", async (msg) => {
       productPrompt.message_id,
       async (nameMsg) => {
         const url = nameMsg.text;
-        console.log(nameMsg);
-        // save name in DB if you want to ...
-        await bot.sendMessage(
-          msg.from.id,
-          `Ви додали наступний товар: ${url}!`
+        // console.log(url);
+        const product = await addProduct(
+          "https://www.atbmarket.com/product/" + url
         );
+
+        const mediaGroup = await createMediaGroup([{ value: product }]);
+
+        await bot.sendMessage(msg.from.id, `Ви додали наступний товар:`);
+        await bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+
+        console.log(
+          `${format(new Date(), "HH:mm:ss")} Product added to ${
+            msg.from.first_name
+          } user's list`
+        );
+        console.log(product);
+        // save name in DB if you want to ...
       }
     );
   }
