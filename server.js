@@ -132,6 +132,8 @@ bot.on("callback_query", async (msg) => {
     }, 0);
   }
 
+  /* ADD PRODUCT */
+
   if (msg.data === "add") {
     // bot.sendMessage(msg.from.id, "🤖 Ця функція наразі у розробці");
     // console.log(msg.from);
@@ -139,7 +141,8 @@ bot.on("callback_query", async (msg) => {
     const name = msg.from.first_name;
     const telegramUserId = msg.from.id;
 
-    const user = await addUser({ name, telegramUserId });
+    await addUser({ name, telegramUserId });
+    // const user = await addUser({ name, telegramUserId });
     // console.log(user);
     // if (user.status === 409) {
     //   await bot.sendMessage(msg.from.id, "🤖 Ви вже зареєстровані");
@@ -159,23 +162,21 @@ bot.on("callback_query", async (msg) => {
       msg.from.id,
       productPrompt.message_id,
       async (nameMsg) => {
-        const url = nameMsg.text;
+        const url = `https://www.atbmarket.com/product/${nameMsg.text}`;
         // console.log(url);
-        const product = await addProduct(
-          "https://www.atbmarket.com/product/" + url
-        );
+        const product = await addProduct({ url, telegramUserId });
 
         const mediaGroup = await createMediaGroup([{ value: product }]);
 
         await bot.sendMessage(msg.from.id, `Ви додали наступний товар:`);
         await bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
 
-        console.log(
-          `${format(new Date(), "HH:mm:ss")} Product added to ${
-            msg.from.first_name
-          } user's list`
-        );
-        console.log(product);
+        // console.log(
+        //   `${format(new Date(), "HH:mm:ss")} Product added to ${
+        //     msg.from.first_name
+        //   } user's list`
+        // );
+        // console.log(product);
         // save name in DB if you want to ...
       }
     );
