@@ -1,12 +1,20 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
-// const parser = require("./parser.js");
-// const getProducts = require("./pw.js");
 const { getProducts } = require("./cheerio.js");
 const format = require("date-fns").format;
 const mongoose = require("mongoose");
 const { addUser, addProduct } = require("./lib/actions");
-const { createMediaGroup } = require("./lib/bot");
+const {
+  createMediaGroup,
+  productsListMsg,
+  processEndMsg,
+} = require("./lib/bot");
+const {
+  timeMessage,
+  userHandler,
+  endProcessMessage,
+  startProcessMessage,
+} = require("./helpers");
 
 const data = require("./data.js");
 
@@ -30,6 +38,9 @@ const bot = new TelegramBot(token, { polling: true });
 
 bot.on("callback_query", async (msg) => {
   // console.log(msg);
+
+  /* USER'S PRODUCT LIST */
+
   if (msg.data === "mylist") {
     const isRegistered = data.filter((user) => user.userId === msg.from.id);
     if (isRegistered.length === 0) {
@@ -43,187 +54,81 @@ bot.on("callback_query", async (msg) => {
     bot.sendMessage(msg.from.id, "🤖 Ця опція наразі у розробці");
   }
 
+  /* SEARCH PRODUCTS WITH PHOTO */
+
   if (msg.data === "photo") {
-    let user = data.find((user) => user.userId === msg.from.id);
-
-    if (!user) {
-      bot.sendMessage(
-        msg.from.id,
-        "🤖 Ви ще ніколи не додавали товарів до свого списку, тому вам будуть відображені випадкові товари для ознайомлення..."
-      );
-      user = data[0];
-    }
-
-    if (user.products.length === 0) {
-      bot.sendMessage(msg.from.id, "❌ У вашому списку немає товарів");
-      return;
-    }
-
-    bot.sendMessage(
-      msg.from.id,
-      "🤖🔎 Пошук акційних товарів за списком, очикуйте..."
-    );
-
-    const startDate = new Date();
-
-    console.log(
-      `${format(startDate, "HH:mm:ss")} User ${
-        msg.from.first_name
-      } looking for products by photo...`
-    );
+    const user = userHandler({ bot, msg, data });
+    if (!user) return;
 
     const userFavoriteProducts = user.products;
 
     setTimeout(async () => {
-      const res = await getProducts(userFavoriteProducts);
-      // console.log(res);
+      const startDate = new Date();
 
-      const actionProducts = res.filter((prod) => prod.value.action);
+      startProcessMessage({ startDate, msg });
 
-      const mediaGroup = await actionProducts.map((prod) => {
-        const {
-          image,
-          title,
-          regularPrice,
-          actionPrice,
-          atbCardPrice,
-          url,
-          productCode,
-        } = prod.value;
-        return {
-          type: "photo",
-          media: image,
-          caption: `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} грн \n${
-            atbCardPrice !== "null"
-              ? "⭐️ Ціна з карткою АТБ: " + atbCardPrice + " грн ⭐️ \n"
-              : ""
-          }🪪 Код товару: ${productCode} \n🛒 ${url}`,
-          parse_mode: "HTML",
-        };
-      });
+      const fetchedProducts = await getProducts(userFavoriteProducts);
 
-      const endDate = new Date();
+      const actionProducts = fetchedProducts.filter(
+        (prod) => prod.value.action
+      );
 
-      const diffTime = Math.abs(endDate - startDate);
-      const isMinute =
-        format(diffTime, "mm") === "00"
-          ? ""
-          : `<b>${format(diffTime, "mm")}<b> хвилин. : `;
+      const mediaGroup = await createMediaGroup(actionProducts);
 
-      const calculateTimeMessage = `${
-        isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " секунд"
-      }`;
+      const time = timeMessage(startDate);
 
       await bot.sendMessage(
         msg.from.id,
-        `${
-          actionProducts.length > 0
-            ? `Пошук завершено за ${calculateTimeMessage}. \nОброблено товарів: <b>${userFavoriteProducts.length}</b>. Знайдені наступні акційні пропозиції: \n \n `
-            : "Пошук завершено, акційних товарів за вашим списком не знайдено 🤷‍♂️"
-        }`,
+        processEndMsg({ actionProducts, time, userFavoriteProducts }),
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
 
       bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
-      console.log(
-        `Process completed for user ${msg.from.first_name} in ${format(
-          diffTime,
-          "mm:ss"
-        )}, ${userFavoriteProducts.length} were processed. ${
-          actionProducts.length
-        } products found.`
-      );
+
+      endProcessMessage({
+        startDate,
+        userFavoriteProducts,
+        actionProducts,
+        msg,
+      });
     }, 0);
   }
 
+  /* SEARCH PRODUCTS WITH LIST */
+
   if (msg.data === "list") {
-    let user = data.find((user) => user.userId === msg.from.id);
-
-    if (!user) {
-      bot.sendMessage(
-        msg.from.id,
-        "🤖 Ви ще ніколи не додавали товарів до свого списку, тому вам будуть відображені випадкові товари для ознайомлення..."
-      );
-      user = data[0];
-    }
-
-    if (user.products.length === 0) {
-      bot.sendMessage(msg.from.id, "❌ У вашому списку немає товарів");
-      return;
-    }
-
-    bot.sendMessage(
-      msg.from.id,
-      "🤖🔎 Пошук акційних товарів за списком, очикуйте..."
-    );
-
-    const startDate = new Date();
-
-    console.log(
-      `${format(startDate, "HH:mm:ss")} User ${
-        msg.from.first_name
-      } looking for products by list...`
-    );
+    const user = userHandler({ bot, msg, data });
+    if (!user) return;
 
     const userFavoriteProducts = user.products;
 
     setTimeout(async () => {
-      const res = await getProducts(userFavoriteProducts);
-      // console.log(res);
+      const startDate = new Date();
 
-      const actionProducts = res.filter((prod) => prod.value.action);
+      startProcessMessage({ startDate, msg });
 
-      const message = actionProducts
-        .map((prod) => {
-          const {
-            title,
-            regularPrice,
-            actionPrice,
-            atbCardPrice,
-            url,
-            productCode,
-          } = prod.value;
+      const fetchedProducts = await getProducts(userFavoriteProducts);
 
-          return `✅ <b>${title}</b> \n💲 Звичайна ціна: ${regularPrice} грн \n❗️ Акційна ціна: ${actionPrice} грн \n${
-            atbCardPrice !== "null"
-              ? "⭐️ Ціна з карткою АТБ: " + atbCardPrice + " грн ⭐️ \n"
-              : ""
-          }🪪 Код товару: ${productCode} \n🛒 ${url}`;
-        })
-        .join("\n \n");
+      const actionProducts = fetchedProducts.filter(
+        (prod) => prod.value.action
+      );
 
-      const endDate = new Date();
+      const message = productsListMsg(actionProducts);
 
-      const diffTime = Math.abs(endDate - startDate);
-
-      const isMinute =
-        format(diffTime, "mm") === "00"
-          ? ""
-          : `<b>${format(diffTime, "mm")}<b> хвилин. : `;
-
-      const calculateTimeMessage = `${
-        isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " секунд"
-      }`;
+      const time = timeMessage(startDate);
 
       await bot.sendMessage(
         msg.from.id,
-        `${
-          actionProducts.length > 0
-            ? `Пошук завершено за ${calculateTimeMessage}. \nОброблено товарів: <b>${userFavoriteProducts.length}</b>. Знайдені наступні акційні пропозиції: \n \n ` +
-              message
-            : "Пошук завершено, акційних товарів за вашим списком не знайдено 🤷‍♂️"
-        }`,
+        processEndMsg({ actionProducts, time, userFavoriteProducts, message }),
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
 
-      console.log(
-        `Process completed for user ${msg.from.first_name} in ${format(
-          diffTime,
-          "mm:ss"
-        )}, ${userFavoriteProducts.length} were processed. ${
-          actionProducts.length
-        } products found.`
-      );
+      endProcessMessage({
+        startDate,
+        userFavoriteProducts,
+        actionProducts,
+        msg,
+      });
     }, 0);
   }
 
@@ -314,24 +219,3 @@ bot.onText(/\/start/, (msg) => {
     },
   });
 });
-
-/* Media model to send via sendMediaGroup */
-// (media = [
-//   {
-//     type: "photo",
-//     media:
-//       "https://media.cnn.com/api/v1/images/stellar/prod/230719152236-04-how-to-stop-the-next-cuban-missile-crisis.jpg?c=16x9&q=h_720,w_1280,c_fill/f_webp",
-//     thumbnail:
-//       "https://www.atbmarket.com/product/sir-kislomolocnij-350-g-ukrainskij-nezirnij-pet",
-//     caption: "test1",
-//   },
-//   {
-//     type: "photo",
-//     media:
-//       "https://media.cnn.com/api/v1/images/stellar/prod/230719152208-03-how-to-stop-the-next-cuban-missile-crisis.jpg?c=16x9&q=h_720,w_1280,c_fill/f_webp",
-//     thumbnail: "",
-//     caption: "test2",
-//     parse_mode: "HTML",
-//     // has_spoiler: true,
-//   },
-// ])
