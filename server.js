@@ -66,43 +66,47 @@ bot.on("callback_query", async (msg) => {
 
   /* SEARCH PRODUCTS WITH PHOTO */
 
-  // if (msg.data === "photo") {
-  //   const user = userHandler({ bot, msg, data });
-  //   if (!user) return;
+  if (msg.data === "photo") {
+    const userFavoriteProducts = await userHandler({
+      bot,
+      msg,
+      Product,
+      User,
+    });
 
-  //   const userFavoriteProducts = user.products;
+    if (!userFavoriteProducts) return;
 
-  //   setTimeout(async () => {
-  //     const startDate = new Date();
+    setTimeout(async () => {
+      const startDate = new Date();
 
-  //     startProcessMessage({ startDate, msg });
+      startProcessMessage({ startDate, msg });
 
-  //     const fetchedProducts = await getProducts(userFavoriteProducts);
+      const fetchedProducts = await getProducts(userFavoriteProducts);
 
-  //     const actionProducts = fetchedProducts.filter(
-  //       (prod) => prod.value.action
-  //     );
+      const actionProducts = fetchedProducts.filter(
+        (prod) => prod.value.action
+      );
 
-  //     const mediaGroup = await createMediaGroup(actionProducts);
+      const mediaGroup = await createMediaGroup(actionProducts);
 
-  //     const time = timeMessage(startDate);
+      const time = timeMessage(startDate);
 
-  //     await bot.sendMessage(
-  //       msg.from.id,
-  //       processEndMsg({ actionProducts, time, userFavoriteProducts }),
-  //       { parse_mode: "HTML", disable_web_page_preview: true }
-  //     );
+      await bot.sendMessage(
+        msg.from.id,
+        processEndMsg({ actionProducts, time, userFavoriteProducts }),
+        { parse_mode: "HTML", disable_web_page_preview: true }
+      );
 
-  //     bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+      bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
 
-  //     endProcessMessage({
-  //       startDate,
-  //       userFavoriteProducts,
-  //       actionProducts,
-  //       msg,
-  //     });
-  //   }, 0);
-  // }
+      endProcessMessage({
+        startDate,
+        userFavoriteProducts,
+        actionProducts,
+        msg,
+      });
+    }, 0);
+  }
 
   /* SEARCH PRODUCTS WITH LIST */
 
