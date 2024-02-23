@@ -165,6 +165,7 @@ bot.on("callback_query", async (msg) => {
         const url = `https://www.atbmarket.com/product/${nameMsg.text}`;
         // console.log(url);
         const product = await addProduct({ url, telegramUserId });
+        // console.log(product);
 
         const mediaGroup = await createMediaGroup([{ value: product }]);
 
