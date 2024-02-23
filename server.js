@@ -167,6 +167,11 @@ bot.on("callback_query", async (msg) => {
       msg.from.id,
       productPrompt.message_id,
       async (nameMsg) => {
+        console.log(nameMsg.text);
+        if (nameMsg.text === "/start") {
+          await bot.sendMessage(msg.from.id, `Ви нічого не додали!`);
+          return;
+        }
         const url = `https://www.atbmarket.com/product/${nameMsg.text}`;
         const product = await addProduct({ url, telegramUserId });
         // console.log(product);

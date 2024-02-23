@@ -5,10 +5,14 @@ const userHandler = async ({ bot, msg, Product, User }) => {
       msg.from.id,
       "🤖 Ви ще ніколи не додавали товарів до свого списку, тому вам будуть відображені випадкові товари для ознайомлення..."
     );
-    return;
+    // return;
   }
 
-  const userId = user ? { owner: user._id } : { telegramUserId: "5146306180" };
+  // const userId = user ? { owner: user._id } : { telegramUserId: "5146306180" };
+  const userId = user
+    ? { owner: user._id }
+    : { owner: "65d88faba601143e00fd9342" };
+  // console.log(userId);
 
   const userFavoriteProducts = await Product.find(userId);
 

@@ -4,69 +4,74 @@ const cheerio = require("cheerio");
 const axiosOptions = {
   headers: {
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0",
     cookie:
-      "banner=593%2C879%2C873%2C867%2C589%2C639%2C889%2C895%2C885%2C%2C893%2C819%2C897%2C725%2C881%2C905%2C779%2C777%2C585%2C901; cf_clearance=UdaUUmzWnh9VLPE2qvGTqdkndMjbZW8lv.881aOCDro-1708359799-1.0-Aex2wDjJcN8r2rAUsq6kt/IevG3Uh0oUiNzZqbsiqUwq6zaIzsrRqiBJL48nGYlTqwPoD+PFzxuZt6QhoFkoABg=; _ms=ff03af6a-958e-406b-ae56-8e7871540789; sc=B26823EB-AF73-4707-1814-A3958115B79A; viewedprod=a%3A8%3A%7Bi%3A0%3Bs%3A6%3A%22180491%22%3Bi%3A1%3Bs%3A6%3A%22163562%22%3Bi%3A2%3Bs%3A6%3A%22170481%22%3Bi%3A3%3Bs%3A6%3A%22126024%22%3Bi%3A4%3Bs%3A5%3A%2251558%22%3Bi%3A5%3Bs%3A6%3A%22131776%22%3Bi%3A6%3Bs%3A6%3A%22162198%22%3Bi%3A7%3Bs%3A6%3A%22162654%22%3B%7D; lang=uk; birthday=true; natbdelivery=0; nstore_id=1262; _sessionfront=udmk9a1olcssiq4ft2r3q9umf8; _csrf-shop=6322513010f5eb12c2433e67b55aae0ceefcebc2a4066bcd16a49e847e858affa%3A2%3A%7Bi%3A0%3Bs%3A10%3A%22_csrf-shop%22%3Bi%3A1%3Bs%3A32%3A%22XYP-weIIU1ElDJXRbvH7RkgoeMUjwWqA%22%3B%7D",
+      "lang=uk; _sessionfront=fl5kdrhrblppptts7tc8bfn6su; _csrf-shop=44b20d6acfaa67652dc9f9d3696dc79ef1bff20548bb47dee5fed67e5313eb70a%3A2%3A%7Bi%3A0%3Bs%3A10%3A%22_csrf-shop%22%3Bi%3A1%3Bs%3A32%3A%226yIUVrJfaIlOsdMSrrxNVFSno_-yPm0k%22%3B%7D; _ms=c8635b32-4563-42cf-9b2c-6e6a7b48a489; cf_clearance=wSEQD9uYJYJra7IOuZrT905FTWhAwo3OJnexJ.Ec4mQ-1708721078-1.0-AVpX47qODJEJ7PlXjQlFrYV7TiflWyZ0l33ZxWJv457SbBSYfxuq8P+H8C1bCEEy/kF9qEqIl9dmkzlgtFLvxUk=; viewedprod=a%3A2%3A%7Bi%3A0%3Bs%3A6%3A%22120333%22%3Bi%3A1%3Bs%3A6%3A%22153675%22%3B%7D",
   },
 };
 
 async function parser({ url, isUserListElement }) {
-  const html = await axios.get(url, axiosOptions).catch((error) => {
-    console.error(error);
-  });
+  try {
+    const html = await axios.get(url, axiosOptions).catch((error) => {
+      console.error(error.message);
+      return error;
+    });
 
-  const $ = cheerio.load(html.data);
+    const $ = cheerio.load(html.data);
 
-  const isAction = $("#productMain data.product-price__bottom span").text();
+    const isAction = $("#productMain data.product-price__bottom span").text();
 
-  if (!isAction && isUserListElement) {
-    return {
-      action: false,
-    };
-  }
+    if (!isAction && isUserListElement) {
+      return {
+        action: false,
+      };
+    }
 
-  const title = $("h1.page-title").text();
-  const image = $("#productMain picture img").attr("src");
-  const code = $("#productMain .custom-tag__text strong").text();
+    const title = $("h1.page-title").text();
+    const image = $("#productMain picture img").attr("src");
+    const code = $("#productMain .custom-tag__text strong").text();
 
-  const regularPrice = isAction
-    ? $("#productMain data.product-price__bottom span").text()
-    : parseFloat(
-        $("#productMain data.product-price__top").text().trim()
-      ).toFixed(2);
-
-  const actionPrice =
-    isAction && isUserListElement
-      ? parseFloat(
+    const regularPrice = isAction
+      ? $("#productMain data.product-price__bottom span").text()
+      : parseFloat(
           $("#productMain data.product-price__top").text().trim()
-        ).toFixed(2)
-      : null;
+        ).toFixed(2);
 
-  // const actionPrice = actionPriceSelector ? actionPriceSelector : null;
+    const actionPrice =
+      isAction && isUserListElement
+        ? parseFloat(
+            $("#productMain data.product-price__top").text().trim()
+          ).toFixed(2)
+        : null;
 
-  const atbCardPriceSelector = $(
-    "#productMain data.atbcard-sale__price-top span"
-  ).text();
+    // const actionPrice = actionPriceSelector ? actionPriceSelector : null;
 
-  let atbCardPrice;
+    const atbCardPriceSelector = $(
+      "#productMain data.atbcard-sale__price-top span"
+    ).text();
 
-  if (!atbCardPriceSelector || !isUserListElement) {
-    atbCardPrice = null;
-  } else {
-    atbCardPrice = atbCardPriceSelector;
+    let atbCardPrice;
+
+    if (!atbCardPriceSelector || !isUserListElement) {
+      atbCardPrice = null;
+    } else {
+      atbCardPrice = atbCardPriceSelector;
+    }
+
+    const response = {
+      action: true,
+      title: `${title}`,
+      image: `${image}`,
+      regularPrice: `${regularPrice}`,
+      actionPrice: `${actionPrice}`,
+      atbCardPrice: `${atbCardPrice}`,
+      productCode: code,
+    };
+
+    return { ...response, url };
+  } catch (error) {
+    console.log(error.message);
   }
-
-  const response = {
-    action: true,
-    title: `${title}`,
-    image: `${image}`,
-    regularPrice: `${regularPrice}`,
-    actionPrice: `${actionPrice}`,
-    atbCardPrice: `${atbCardPrice}`,
-    productCode: code,
-  };
-
-  return { ...response, url };
 }
 
 const getProducts = async (arr) => {
