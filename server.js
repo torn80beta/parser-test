@@ -57,11 +57,29 @@ bot.on("callback_query", async (msg) => {
     }
 
     const products = await Product.find({ owner: user._id });
+    // const products = await Product.find({ owner: "65d88faba601143e00fd9342" });
 
-    await bot.sendMessage(msg.from.id, userProductsMsg(products), {
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    });
+    await bot.sendMessage(
+      msg.from.id,
+      `Кількість товарів у вашому списку: <b>${products.length}</b>.`,
+      {
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }
+    );
+
+    const messageParts = Math.ceil(products.length / 20);
+
+    for (let i = 0; i < messageParts; i++) {
+      const start = i * 2 * 10;
+      const end = start + 20;
+      const partialList = products.slice(start, end);
+
+      await bot.sendMessage(msg.from.id, userProductsMsg(partialList), {
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      });
+    }
   }
 
   /* SEARCH PRODUCTS WITH PHOTO */
