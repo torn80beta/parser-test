@@ -19,7 +19,7 @@ const {
 const User = require("./lib/models/user.js");
 const Product = require("./lib/models/product.js");
 
-const data = require("./data.js");
+// const data = require("./data.js");
 
 const { DB_KEY } = process.env;
 
@@ -55,7 +55,7 @@ bot.on("callback_query", async (msg) => {
       );
       return;
     }
-    // const products = await getUserProducts(user._id);
+
     const products = await Product.find({ owner: user._id });
 
     await bot.sendMessage(msg.from.id, userProductsMsg(products), {
