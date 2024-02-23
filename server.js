@@ -3,11 +3,12 @@ require("dotenv").config();
 const { getProducts } = require("./cheerio.js");
 const format = require("date-fns").format;
 const mongoose = require("mongoose");
-const { addUser, addProduct } = require("./lib/actions");
+const { addUser, addProduct, getUserProducts } = require("./lib/actions");
 const {
   createMediaGroup,
   productsListMsg,
   processEndMsg,
+  userProductsMsg,
 } = require("./lib/bot");
 const {
   timeMessage,
@@ -39,19 +40,18 @@ const bot = new TelegramBot(token, { polling: true });
 bot.on("callback_query", async (msg) => {
   // console.log(msg);
 
-  /* USER'S PRODUCT LIST */
+  /* GET USER'S PRODUCT LIST */
 
   if (msg.data === "mylist") {
-    const isRegistered = data.filter((user) => user.userId === msg.from.id);
-    if (isRegistered.length === 0) {
-      bot.sendMessage(
-        msg.from.id,
-        "Ви ще не додавали товарів у свій список. Якщо скористаєтесь опцією 'Список акцій' або 'Фото акцій' ви отримаєте товари із випадкового списку щоб ви могли побачити як працює бот."
-      );
-      return;
-    }
+    const telegramUserId = msg.from.id;
+    const products = await getUserProducts({ telegramUserId, bot });
 
-    bot.sendMessage(msg.from.id, "🤖 Ця опція наразі у розробці");
+    if (!products) return;
+
+    await bot.sendMessage(msg.from.id, userProductsMsg(products), {
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    });
   }
 
   /* SEARCH PRODUCTS WITH PHOTO */
@@ -135,18 +135,10 @@ bot.on("callback_query", async (msg) => {
   /* ADD PRODUCT */
 
   if (msg.data === "add") {
-    // bot.sendMessage(msg.from.id, "🤖 Ця функція наразі у розробці");
-    // console.log(msg.from);
-
     const name = msg.from.first_name;
     const telegramUserId = msg.from.id;
 
     await addUser({ name, telegramUserId });
-    // const user = await addUser({ name, telegramUserId });
-    // console.log(user);
-    // if (user.status === 409) {
-    //   await bot.sendMessage(msg.from.id, "🤖 Ви вже зареєстровані");
-    // }
 
     const productPrompt = await bot.sendMessage(
       msg.from.id,
@@ -163,25 +155,24 @@ bot.on("callback_query", async (msg) => {
       productPrompt.message_id,
       async (nameMsg) => {
         const url = `https://www.atbmarket.com/product/${nameMsg.text}`;
-        // console.log(url);
         const product = await addProduct({ url, telegramUserId });
         // console.log(product);
-
         const mediaGroup = await createMediaGroup([{ value: product }]);
 
         await bot.sendMessage(msg.from.id, `Ви додали наступний товар:`);
         await bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
 
-        // console.log(
-        //   `${format(new Date(), "HH:mm:ss")} Product added to ${
-        //     msg.from.first_name
-        //   } user's list`
-        // );
-        // console.log(product);
-        // save name in DB if you want to ...
+        console.log(
+          `${format(new Date(), "HH:mm:ss")} Product added to ${
+            msg.from.first_name
+          } user's list`
+        );
+        console.log(product);
       }
     );
   }
+
+  /* DELETE PRODUCT */
 
   if (msg.data === "delete") {
     console.log(msg.from);
