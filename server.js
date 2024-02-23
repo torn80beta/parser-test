@@ -3,7 +3,7 @@ require("dotenv").config();
 const { getProducts } = require("./cheerio.js");
 const format = require("date-fns").format;
 const mongoose = require("mongoose");
-const { addUser, addProduct, getUserProducts } = require("./lib/actions");
+const { addUser, addProduct } = require("./lib/actions");
 const {
   createMediaGroup,
   productsListMsg,
@@ -12,10 +12,12 @@ const {
 } = require("./lib/bot");
 const {
   timeMessage,
-  userHandler,
   endProcessMessage,
   startProcessMessage,
+  userHandler,
 } = require("./helpers");
+const User = require("./lib/models/user.js");
+const Product = require("./lib/models/product.js");
 
 const data = require("./data.js");
 
@@ -44,9 +46,17 @@ bot.on("callback_query", async (msg) => {
 
   if (msg.data === "mylist") {
     const telegramUserId = msg.from.id;
-    const products = await getUserProducts({ telegramUserId, bot });
-
-    if (!products) return;
+    const user = await User.findOne({ telegramUserId });
+    // console.log(user);
+    if (!user) {
+      await bot.sendMessage(
+        telegramUserId,
+        "Ви ще не додавали товарів у свій список. Якщо скористаєтесь опцією 'Список акцій' або 'Фото акцій' ви отримаєте товари із випадкового списку щоб ви могли побачити як працює бот."
+      );
+      return;
+    }
+    // const products = await getUserProducts(user._id);
+    const products = await Product.find({ owner: user._id });
 
     await bot.sendMessage(msg.from.id, userProductsMsg(products), {
       parse_mode: "HTML",
@@ -56,51 +66,50 @@ bot.on("callback_query", async (msg) => {
 
   /* SEARCH PRODUCTS WITH PHOTO */
 
-  if (msg.data === "photo") {
-    const user = userHandler({ bot, msg, data });
-    if (!user) return;
+  // if (msg.data === "photo") {
+  //   const user = userHandler({ bot, msg, data });
+  //   if (!user) return;
 
-    const userFavoriteProducts = user.products;
+  //   const userFavoriteProducts = user.products;
 
-    setTimeout(async () => {
-      const startDate = new Date();
+  //   setTimeout(async () => {
+  //     const startDate = new Date();
 
-      startProcessMessage({ startDate, msg });
+  //     startProcessMessage({ startDate, msg });
 
-      const fetchedProducts = await getProducts(userFavoriteProducts);
+  //     const fetchedProducts = await getProducts(userFavoriteProducts);
 
-      const actionProducts = fetchedProducts.filter(
-        (prod) => prod.value.action
-      );
+  //     const actionProducts = fetchedProducts.filter(
+  //       (prod) => prod.value.action
+  //     );
 
-      const mediaGroup = await createMediaGroup(actionProducts);
+  //     const mediaGroup = await createMediaGroup(actionProducts);
 
-      const time = timeMessage(startDate);
+  //     const time = timeMessage(startDate);
 
-      await bot.sendMessage(
-        msg.from.id,
-        processEndMsg({ actionProducts, time, userFavoriteProducts }),
-        { parse_mode: "HTML", disable_web_page_preview: true }
-      );
+  //     await bot.sendMessage(
+  //       msg.from.id,
+  //       processEndMsg({ actionProducts, time, userFavoriteProducts }),
+  //       { parse_mode: "HTML", disable_web_page_preview: true }
+  //     );
 
-      bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+  //     bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
 
-      endProcessMessage({
-        startDate,
-        userFavoriteProducts,
-        actionProducts,
-        msg,
-      });
-    }, 0);
-  }
+  //     endProcessMessage({
+  //       startDate,
+  //       userFavoriteProducts,
+  //       actionProducts,
+  //       msg,
+  //     });
+  //   }, 0);
+  // }
 
   /* SEARCH PRODUCTS WITH LIST */
 
   if (msg.data === "list") {
-    const user = userHandler({ bot, msg, data });
-    if (!user) return;
+    const userFavoriteProducts = await userHandler({ bot, msg, Product, User });
 
-    const userFavoriteProducts = user.products;
+    if (!userFavoriteProducts) return;
 
     setTimeout(async () => {
       const startDate = new Date();

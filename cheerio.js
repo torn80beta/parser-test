@@ -73,7 +73,7 @@ const getProducts = async (arr) => {
   const resp = await Promise.allSettled(
     arr.map(async (el) => {
       try {
-        const r = await parser({ ...el, isUserListElement: true });
+        const r = await parser({ url: el.url, isUserListElement: true });
         return r;
       } catch (error) {
         return { action: false, error };
