@@ -15,6 +15,7 @@ const {
   endProcessMessage,
   startProcessMessage,
   userHandler,
+  urlHandler,
 } = require("./helpers");
 const User = require("./lib/models/user.js");
 const Product = require("./lib/models/product.js");
@@ -185,14 +186,23 @@ bot.on("callback_query", async (msg) => {
       msg.from.id,
       productPrompt.message_id,
       async (nameMsg) => {
-        console.log(nameMsg.text);
-        if (nameMsg.text === "/start") {
-          await bot.sendMessage(msg.from.id, `Ви нічого не додали!`);
+        console.log(
+          `${format(new Date(), "HH:mm:ss")} User${
+            msg.from.first_name
+          } trying to add product: ${nameMsg.text}`
+        );
+
+        const url = await urlHandler(nameMsg.text);
+        const product = await addProduct({ url, telegramUserId });
+
+        if (!url || product.status === undefined) {
+          await bot.sendMessage(
+            msg.from.id,
+            `🤖 Посилання не валідне! Перевірте і спробуйте ще раз.`
+          );
           return;
         }
-        const url = `https://www.atbmarket.com/product/${nameMsg.text}`;
-        const product = await addProduct({ url, telegramUserId });
-        // console.log(product);
+
         const mediaGroup = await createMediaGroup([{ value: product }]);
 
         await bot.sendMessage(msg.from.id, `Ви додали наступний товар:`);

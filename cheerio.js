@@ -13,7 +13,7 @@ const axiosOptions = {
 async function parser({ url, isUserListElement }) {
   try {
     const html = await axios.get(url, axiosOptions).catch((error) => {
-      console.error(error.message);
+      // console.error(error.message);
       return error;
     });
 
@@ -70,7 +70,8 @@ async function parser({ url, isUserListElement }) {
 
     return { ...response, url };
   } catch (error) {
-    console.log(error.message);
+    // console.log(error.message, error.status);
+    return error.status;
   }
 }
 
