@@ -10,7 +10,7 @@ const timeMessage = (startDate) => {
       : `<b>${format(diffTime, "mm")}<b> хвилин. : `;
 
   const calculateTimeMessage = `${
-    isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " секунд"
+    isMinute + "<b>" + format(diffTime, "ss") + "</b>" + " сек."
   }`;
 
   return calculateTimeMessage;

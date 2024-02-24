@@ -11,7 +11,9 @@ const userHandler = async ({ bot, msg, Product, User }) => {
     ? { owner: user._id }
     : { owner: "65d88faba601143e00fd9342" };
 
-  const userFavoriteProducts = await Product.find(userId);
+  const userFavoriteProducts = await Product.find(userId).sort({
+    title: "asc",
+  });
 
   if (userFavoriteProducts.length === 0) {
     await bot.sendMessage(msg.from.id, "❌ У вашому списку немає товарів");

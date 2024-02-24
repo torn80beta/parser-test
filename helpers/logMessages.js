@@ -1,10 +1,10 @@
 const format = require("date-fns").format;
 
-const startProcessMessage = ({ startDate, msg }) => {
+const startProcessMessage = ({ startDate, msg, searchBy }) => {
   console.log(
     `${format(startDate, "HH:mm:ss")} User ${
       msg.from.first_name
-    } looking for products by list...`
+    } looking for products by ${searchBy}...`
   );
 };
 

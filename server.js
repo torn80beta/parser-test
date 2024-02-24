@@ -47,6 +47,7 @@ bot.on("callback_query", async (msg) => {
     const telegramUserId = msg.from.id;
     const user = await User.findOne({ telegramUserId });
     // console.log(user);
+
     if (!user) {
       await bot.sendMessage(
         telegramUserId,
@@ -55,8 +56,12 @@ bot.on("callback_query", async (msg) => {
       return;
     }
 
-    const products = await Product.find({ owner: user._id });
-    // const products = await Product.find({ owner: "65d88faba601143e00fd9342" });
+    const products = await Product.find({ owner: user._id }).sort({
+      title: "asc",
+    });
+    // const products = await Product.find({
+    //   owner: "65d88faba601143e00fd9342",
+    // }).sort({ title: "asc" });
 
     if (products.length === 0) {
       await bot.sendMessage(msg.from.id, "🤖 У вашому списку немає товарів.");
@@ -80,7 +85,7 @@ bot.on("callback_query", async (msg) => {
       const end = start + 20;
       const partialList = products.slice(start, end);
 
-      await bot.sendMessage(msg.from.id, userProductsMsg(partialList), {
+      await bot.sendMessage(msg.from.id, userProductsMsg(partialList, start), {
         parse_mode: "HTML",
         disable_web_page_preview: true,
       });
@@ -102,7 +107,7 @@ bot.on("callback_query", async (msg) => {
     setTimeout(async () => {
       const startDate = new Date();
 
-      startProcessMessage({ startDate, msg });
+      startProcessMessage({ startDate, msg, searchBy: "photo" });
 
       const fetchedProducts = await getProducts(userFavoriteProducts);
 
@@ -127,7 +132,7 @@ bot.on("callback_query", async (msg) => {
 
         const mediaGroup = await createMediaGroup(partialList);
 
-        bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+        await bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
       }
 
       endProcessMessage({
@@ -149,7 +154,7 @@ bot.on("callback_query", async (msg) => {
     setTimeout(async () => {
       const startDate = new Date();
 
-      startProcessMessage({ startDate, msg });
+      startProcessMessage({ startDate, msg, searchBy: "list" });
 
       const fetchedProducts = await getProducts(userFavoriteProducts);
 
@@ -233,7 +238,7 @@ bot.on("callback_query", async (msg) => {
   /* DELETE PRODUCT */
 
   if (msg.data === "delete") {
-    console.log(msg.from);
+    // console.log(msg.from);
     bot.sendMessage(msg.from.id, "🤖 Ця функція наразі у розробці");
   }
 });
