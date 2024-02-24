@@ -5,14 +5,11 @@ const userHandler = async ({ bot, msg, Product, User }) => {
       msg.from.id,
       "🤖 Ви ще ніколи не додавали товарів до свого списку, тому вам будуть відображені випадкові товари для ознайомлення..."
     );
-    // return;
   }
 
-  // const userId = user ? { owner: user._id } : { telegramUserId: "5146306180" };
   const userId = user
     ? { owner: user._id }
     : { owner: "65d88faba601143e00fd9342" };
-  // console.log(userId);
 
   const userFavoriteProducts = await Product.find(userId);
 
@@ -24,7 +21,15 @@ const userHandler = async ({ bot, msg, Product, User }) => {
 
   await bot.sendMessage(
     msg.from.id,
-    "🤖🔎 Пошук акційних товарів за списком, очикуйте..."
+    `🔎 Пошук акційних товарів за списком, очикуйте... \nКількість товарів у вашому списку: <b>${
+      userFavoriteProducts.length
+    }</b> \nПриблизний час обробки вашого списку: ${Math.floor(
+      userFavoriteProducts.length / 2.2
+    )} сек.`,
+    {
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }
   );
 
   return userFavoriteProducts;

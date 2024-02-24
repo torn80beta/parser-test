@@ -20,8 +20,6 @@ const {
 const User = require("./lib/models/user.js");
 const Product = require("./lib/models/product.js");
 
-// const data = require("./data.js");
-
 const { DB_KEY } = process.env;
 
 mongoose.set("strictQuery", true);
@@ -112,8 +110,6 @@ bot.on("callback_query", async (msg) => {
         (prod) => prod.value.action
       );
 
-      const mediaGroup = await createMediaGroup(actionProducts);
-
       const time = timeMessage(startDate);
 
       await bot.sendMessage(
@@ -122,7 +118,17 @@ bot.on("callback_query", async (msg) => {
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
 
-      bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+      const messageParts = Math.ceil(actionProducts.length / 10);
+
+      for (let i = 0; i < messageParts; i++) {
+        const start = i * 10;
+        const end = start + 10;
+        const partialList = actionProducts.slice(start, end);
+
+        const mediaGroup = await createMediaGroup(partialList);
+
+        bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
+      }
 
       endProcessMessage({
         startDate,
