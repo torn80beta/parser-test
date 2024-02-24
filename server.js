@@ -52,7 +52,7 @@ bot.on("callback_query", async (msg) => {
     if (!user) {
       await bot.sendMessage(
         telegramUserId,
-        "Ви ще не додавали товарів у свій список. Якщо скористаєтесь опцією 'Список акцій' або 'Фото акцій' ви отримаєте товари із випадкового списку щоб ви могли побачити як працює бот."
+        "🤖 Ви ще не додавали товарів у свій список. Якщо скористаєтесь опцією 'Список акцій' або 'Фото акцій' ви отримаєте товари із випадкового списку щоб ви могли побачити як працює бот."
       );
       return;
     }
@@ -60,9 +60,15 @@ bot.on("callback_query", async (msg) => {
     const products = await Product.find({ owner: user._id });
     // const products = await Product.find({ owner: "65d88faba601143e00fd9342" });
 
+    if (products.length === 0) {
+      await bot.sendMessage(msg.from.id, "🤖 У вашому списку немає товарів.");
+
+      return;
+    }
+
     await bot.sendMessage(
       msg.from.id,
-      `Кількість товарів у вашому списку: <b>${products.length}</b>.`,
+      `🤖 Кількість товарів у вашому списку: <b>${products.length}</b>.`,
       {
         parse_mode: "HTML",
         disable_web_page_preview: true,
@@ -195,17 +201,17 @@ bot.on("callback_query", async (msg) => {
         const url = await urlHandler(nameMsg.text);
         const product = await addProduct({ url, telegramUserId });
 
-        if (!url || product.status === undefined) {
+        if (!url || product.status !== 201) {
           await bot.sendMessage(
             msg.from.id,
-            `🤖 Посилання не валідне! Перевірте і спробуйте ще раз.`
+            `❌ Посилання не валідне! Перевірте і спробуйте ще раз.`
           );
           return;
         }
 
-        const mediaGroup = await createMediaGroup([{ value: product }]);
+        const mediaGroup = await createMediaGroup([{ value: product.value }]);
 
-        await bot.sendMessage(msg.from.id, `Ви додали наступний товар:`);
+        await bot.sendMessage(msg.from.id, `✅ Ви додали наступний товар:`);
         await bot.sendMediaGroup(msg.from.id, (media = mediaGroup));
 
         console.log(
