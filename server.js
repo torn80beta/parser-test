@@ -14,7 +14,7 @@ const {
   timeMessage,
   endProcessMessage,
   startProcessMessage,
-  userHandler,
+  searchMessageHandler,
   urlHandler,
 } = require("./helpers");
 const User = require("./lib/models/user.js");
@@ -59,6 +59,7 @@ bot.on("callback_query", async (msg) => {
     const products = await Product.find({ owner: user._id }).sort({
       title: "asc",
     });
+    /* TEST USER */
     // const products = await Product.find({
     //   owner: "65d88faba601143e00fd9342",
     // }).sort({ title: "asc" });
@@ -95,7 +96,7 @@ bot.on("callback_query", async (msg) => {
   /* SEARCH PRODUCTS WITH PHOTO */
 
   if (msg.data === "photo") {
-    const userFavoriteProducts = await userHandler({
+    const userFavoriteProducts = await searchMessageHandler({
       bot,
       msg,
       Product,
@@ -147,7 +148,12 @@ bot.on("callback_query", async (msg) => {
   /* SEARCH PRODUCTS WITH LIST */
 
   if (msg.data === "list") {
-    const userFavoriteProducts = await userHandler({ bot, msg, Product, User });
+    const userFavoriteProducts = await searchMessageHandler({
+      bot,
+      msg,
+      Product,
+      User,
+    });
 
     if (!userFavoriteProducts) return;
 
@@ -199,7 +205,7 @@ bot.on("callback_query", async (msg) => {
       }
     );
 
-    bot.onReplyToMessage(
+    await bot.onReplyToMessage(
       msg.from.id,
       productPrompt.message_id,
       async (nameMsg) => {
@@ -230,7 +236,7 @@ bot.on("callback_query", async (msg) => {
             msg.from.first_name
           } user's list`
         );
-        console.log(product);
+        // console.log(product);
       }
     );
   }
@@ -239,7 +245,50 @@ bot.on("callback_query", async (msg) => {
 
   if (msg.data === "delete") {
     // console.log(msg.from);
-    bot.sendMessage(msg.from.id, "🤖 Ця функція наразі у розробці");
+    const user = await User.findOne({ telegramUserId: msg.from.id });
+
+    if (!user) {
+      bot.sendMessage(msg.from.id, "🤖 У вашому списку немає товарів.");
+      return;
+    }
+
+    const prompt = await bot.sendMessage(
+      msg.from.id,
+      "Введіть код товару який ви хочете видалити: ",
+      {
+        reply_markup: {
+          force_reply: true,
+        },
+      }
+    );
+
+    await bot.onReplyToMessage(msg.from.id, prompt.message_id, async (msg) => {
+      const productToUpdate = await Product.findOne({
+        productCode: msg.text,
+      });
+
+      if (!productToUpdate) {
+        await bot.sendMessage(
+          msg.from.id,
+          "❌ Такого товару не знайдено. Перевірте код і наявність цього товару у вашому списку і спробуйте ще раз."
+        );
+        return;
+      }
+
+      // console.log(productToUpdate);
+
+      await productToUpdate.owner.pull({
+        _id: user._id,
+      });
+      await productToUpdate.save();
+
+      console.log(productToUpdate);
+      if (productToUpdate.owner.length === 0) {
+        await Product.deleteOne({ _id: productToUpdate._id });
+      }
+
+      await bot.sendMessage(msg.from.id, `✅ Товар успішно видалено.`);
+    });
   }
 });
 

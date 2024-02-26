@@ -1,4 +1,4 @@
-const userHandler = async ({ bot, msg, Product, User }) => {
+const searchMessageHandler = async ({ bot, msg, Product, User }) => {
   const user = await User.findOne({ telegramUserId: msg.from.id });
   if (!user) {
     await bot.sendMessage(
@@ -37,4 +37,4 @@ const userHandler = async ({ bot, msg, Product, User }) => {
   return userFavoriteProducts;
 };
 
-module.exports = userHandler;
+module.exports = searchMessageHandler;

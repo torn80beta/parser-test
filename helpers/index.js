@@ -2,7 +2,7 @@ const timeMessage = require("./time");
 const httpError = require("./httpError");
 const handleMongooseError = require("./handleMongooseError");
 const { startProcessMessage, endProcessMessage } = require("./logMessages");
-const userHandler = require("./userHandler");
+const searchMessageHandler = require("./searchMessageHandler");
 const urlHandler = require("./urlHandler");
 
 module.exports = {
@@ -11,6 +11,6 @@ module.exports = {
   handleMongooseError,
   startProcessMessage,
   endProcessMessage,
-  userHandler,
+  searchMessageHandler,
   urlHandler,
 };
