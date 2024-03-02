@@ -32,7 +32,9 @@ async function parser({ url, isUserListElement }) {
     const code = $("#productMain .custom-tag__text strong").text();
 
     const regularPrice = isAction
-      ? $("#productMain data.product-price__bottom span").text()
+      ? parseFloat(
+          $("#productMain data.product-price__bottom span").text().trim()
+        ).toFixed(2)
       : parseFloat(
           $("#productMain data.product-price__top").text().trim()
         ).toFixed(2);
@@ -46,13 +48,13 @@ async function parser({ url, isUserListElement }) {
 
     // const actionPrice = actionPriceSelector ? actionPriceSelector : null;
 
-    const atbCardPriceSelector = $(
-      "#productMain data.atbcard-sale__price-top span"
-    ).text();
+    const atbCardPriceSelector = parseFloat(
+      $("#productMain data.atbcard-sale__price-top span").text().trim()
+    ).toFixed(2);
 
     let atbCardPrice;
 
-    if (!atbCardPriceSelector || !isUserListElement) {
+    if (atbCardPriceSelector === "NaN" || !isUserListElement) {
       atbCardPrice = null;
     } else {
       atbCardPrice = atbCardPriceSelector;

@@ -244,7 +244,6 @@ bot.on("callback_query", async (msg) => {
   /* DELETE PRODUCT */
 
   if (msg.data === "delete") {
-    // console.log(msg.from);
     const user = await User.findOne({ telegramUserId: msg.from.id });
 
     if (!user) {
@@ -282,7 +281,7 @@ bot.on("callback_query", async (msg) => {
       });
       await productToUpdate.save();
 
-      console.log(productToUpdate);
+      // console.log(productToUpdate);
       if (productToUpdate.owner.length === 0) {
         await Product.deleteOne({ _id: productToUpdate._id });
       }
