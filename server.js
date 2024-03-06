@@ -168,15 +168,32 @@ bot.on("callback_query", async (msg) => {
         (prod) => prod.value.action
       );
 
-      const message = productsListMsg(actionProducts);
-
       const time = timeMessage(startDate);
 
       await bot.sendMessage(
         msg.from.id,
-        processEndMsg({ actionProducts, time, userFavoriteProducts, message }),
+        processEndMsg({
+          actionProducts,
+          time,
+          userFavoriteProducts,
+        }),
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
+
+      const messageParts = Math.ceil(actionProducts.length / 10);
+
+      for (let i = 0; i < messageParts; i++) {
+        const start = i * 10;
+        const end = start + 10;
+        const partialList = actionProducts.slice(start, end);
+
+        const message = productsListMsg(partialList);
+
+        await bot.sendMessage(msg.from.id, message, {
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+        });
+      }
 
       endProcessMessage({
         startDate,
