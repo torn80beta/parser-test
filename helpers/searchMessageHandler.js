@@ -9,7 +9,7 @@ const searchMessageHandler = async ({ bot, msg, Product, User }) => {
 
   const userId = user
     ? { owner: user._id }
-    : { owner: "65d88faba601143e00fd9342" };
+    : { owner: "65dc54077ed416f76714ef0d" };
 
   const userFavoriteProducts = await Product.find(userId).sort({
     title: "asc",
