@@ -46,8 +46,6 @@ async function parser({ url, isUserListElement }) {
           ).toFixed(2)
         : null;
 
-    // const actionPrice = actionPriceSelector ? actionPriceSelector : null;
-
     const atbCardPriceSelector = parseFloat(
       $("#productMain data.atbcard-sale__price-top span").text().trim()
     ).toFixed(2);
@@ -84,11 +82,12 @@ const getProducts = async (arr) => {
         const r = await parser({ url: el.url, isUserListElement: true });
         return r;
       } catch (error) {
+        console.log(`false`);
         return { action: false, error };
       }
     })
   );
-  // console.log(resp);
+
   return resp;
 };
 

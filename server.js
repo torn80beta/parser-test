@@ -39,14 +39,11 @@ const token = process.env.BOT_API_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
 bot.on("callback_query", async (msg) => {
-  // console.log(msg);
-
   /* GET USER'S PRODUCT LIST */
 
   if (msg.data === "mylist") {
     const telegramUserId = msg.from.id;
     const user = await User.findOne({ telegramUserId });
-    // console.log(user);
 
     if (!user) {
       await bot.sendMessage(
@@ -59,10 +56,6 @@ bot.on("callback_query", async (msg) => {
     const products = await Product.find({ owner: user._id }).sort({
       title: "asc",
     });
-    /* TEST USER */
-    // const products = await Product.find({
-    //   owner: "65d88faba601143e00fd9342",
-    // }).sort({ title: "asc" });
 
     if (products.length === 0) {
       await bot.sendMessage(msg.from.id, "🤖 У вашому списку немає товарів.");
@@ -254,7 +247,6 @@ bot.on("callback_query", async (msg) => {
             msg.from.first_name
           } user's list`
         );
-        // console.log(product);
       }
     );
   }
@@ -292,14 +284,11 @@ bot.on("callback_query", async (msg) => {
         return;
       }
 
-      // console.log(productToUpdate);
-
       await productToUpdate.owner.pull({
         _id: user._id,
       });
       await productToUpdate.save();
 
-      // console.log(productToUpdate);
       if (productToUpdate.owner.length === 0) {
         await Product.deleteOne({ _id: productToUpdate._id });
       }
@@ -310,7 +299,6 @@ bot.on("callback_query", async (msg) => {
 });
 
 bot.onText(/\/start/, (msg) => {
-  // console.log(msg);
   const welcomeMessage = "Вітаю, " + msg.from.first_name + "! 👋";
 
   bot.sendMessage(msg.chat.id, welcomeMessage, {
