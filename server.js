@@ -1,6 +1,6 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
-const { getProducts } = require("./cheerio.js");
+const { getProducts } = require("./parser.js");
 const format = require("date-fns").format;
 const mongoose = require("mongoose");
 const { addUser, addProduct } = require("./lib/actions");

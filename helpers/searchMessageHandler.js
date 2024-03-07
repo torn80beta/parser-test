@@ -26,7 +26,7 @@ const searchMessageHandler = async ({ bot, msg, Product, User }) => {
     `🔎 Пошук акційних товарів за списком, очикуйте... \nКількість товарів у вашому списку: <b>${
       userFavoriteProducts.length
     }</b> \nПриблизний час обробки вашого списку: ${Math.floor(
-      userFavoriteProducts.length / 2.2
+      userFavoriteProducts.length / 1.9
     )} сек.`,
     {
       parse_mode: "HTML",
