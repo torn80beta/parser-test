@@ -19,9 +19,15 @@ async function parser({ url, isUserListElement }) {
 
     const $ = cheerio.load(html.data);
 
-    const isAction = $("#productMain data.product-price__bottom span").text();
+    const isAction = $("#productMain data.product-price__bottom span")
+      .text()
+      .trim();
 
-    if (!isAction && isUserListElement) {
+    const isAtbCardPrice = $("#productMain data.atbcard-sale__price-top span")
+      .text()
+      .trim();
+
+    if (!isAction && !isAtbCardPrice && isUserListElement) {
       return {
         action: false,
       };
