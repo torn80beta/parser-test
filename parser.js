@@ -1,41 +1,65 @@
-const axios = require("axios");
+const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
+const pLimit = require("p-limit");
 
-const axiosOptions = {
-  headers: {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0",
-    cookie:
-      "lang=uk; _sessionfront=fl5kdrhrblppptts7tc8bfn6su; _csrf-shop=44b20d6acfaa67652dc9f9d3696dc79ef1bff20548bb47dee5fed67e5313eb70a%3A2%3A%7Bi%3A0%3Bs%3A10%3A%22_csrf-shop%22%3Bi%3A1%3Bs%3A32%3A%226yIUVrJfaIlOsdMSrrxNVFSno_-yPm0k%22%3B%7D; _ms=c8635b32-4563-42cf-9b2c-6e6a7b48a489; cf_clearance=wSEQD9uYJYJra7IOuZrT905FTWhAwo3OJnexJ.Ec4mQ-1708721078-1.0-AVpX47qODJEJ7PlXjQlFrYV7TiflWyZ0l33ZxWJv457SbBSYfxuq8P+H8C1bCEEy/kF9qEqIl9dmkzlgtFLvxUk=; viewedprod=a%3A2%3A%7Bi%3A0%3Bs%3A6%3A%22120333%22%3Bi%3A1%3Bs%3A6%3A%22153675%22%3B%7D",
-  },
-};
+const CONCURRENCY_LIMIT = 10;
 
-async function parser({ url, isUserListElement }) {
+async function fetchHtmlWithPage(page, url) {
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+  );
+
+  await page.setExtraHTTPHeaders({
+    "Accept-Language": "en-US,en;q=0.9,uk;q=0.8",
+    Referer: "https://www.google.com/",
+  });
+
+  await page.setViewport({ width: 1366, height: 768 });
+
+  const serverResponse = await page.goto(url, {
+    waitUntil: "networkidle2",
+    timeout: 60000,
+  });
+
+  if (!serverResponse || !serverResponse.ok()) {
+    throw new Error(`Page load failed: ${serverResponse?.status()} ${url}`);
+  }
+
+  // Подождать, если нужно, но меньше
+  // await page.waitForTimeout(1000);
+  // await new Promise((r) => setTimeout(r, 3000));
+  // await page.waitForSelector({
+  //   selector: "#productMain",
+  //   options: { timeout: 3000 },
+  // });
+  await page.waitForSelector("#productMain", { timeout: 3000 });
+
+  return await page.content();
+}
+
+async function parser(page, { url, isUserListElement }) {
   try {
-    const html = await axios.get(url, axiosOptions).catch((error) => {
-      // console.error(error.message);
-      return error;
-    });
-
-    const $ = cheerio.load(html.data);
+    const html = await fetchHtmlWithPage(page, url);
+    const $ = cheerio.load(html);
 
     const isAction = $("#productMain data.product-price__bottom span")
       .text()
       .trim();
-
     const isAtbCardPrice = $("#productMain data.atbcard-sale__price-top span")
       .text()
       .trim();
 
     if (!isAction && !isAtbCardPrice && isUserListElement) {
-      return {
-        action: false,
-      };
+      return { action: false };
     }
 
     const title = $("h1.page-title").text();
     const image = $("#productMain picture img").attr("src");
     const code = $("#productMain .custom-tag__text strong").text();
+
+    // console.log(title);
+    // console.log(isAction);
 
     const regularPrice = isAction
       ? parseFloat(
@@ -56,54 +80,82 @@ async function parser({ url, isUserListElement }) {
       $("#productMain data.atbcard-sale__price-top span").text().trim()
     ).toFixed(2);
 
-    let atbCardPrice;
+    const atbCardPrice =
+      atbCardPriceSelector === "NaN" || !isUserListElement
+        ? null
+        : atbCardPriceSelector;
 
-    if (atbCardPriceSelector === "NaN" || !isUserListElement) {
-      atbCardPrice = null;
-    } else {
-      atbCardPrice = atbCardPriceSelector;
-    }
-
-    const response = {
+    return {
       action: true,
-      title: `${title}`,
-      image: `${image}`,
-      regularPrice: `${regularPrice}`,
-      actionPrice: `${actionPrice}`,
-      atbCardPrice: `${atbCardPrice}`,
+      title,
+      image,
+      regularPrice,
+      actionPrice,
+      atbCardPrice,
       productCode: code,
+      url,
     };
-
-    return { ...response, url };
   } catch (error) {
-    // console.log(error.message, error.status);
-    return error.status;
+    console.error("Parser error:", error.message);
+    return { action: false, error };
   }
 }
 
-const getProducts = async (arr) => {
-  const resp = await Promise.allSettled(
-    arr.map(async (el) => {
-      try {
-        const r = await parser({ url: el.url, isUserListElement: true });
-        return r;
-      } catch (error) {
-        console.log(`false`);
-        return { action: false, error };
-      }
-    })
+async function getProducts(arr) {
+  const browser = await puppeteer.launch({
+    headless: false,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  const limit = pLimit(CONCURRENCY_LIMIT);
+
+  const results = await Promise.allSettled(
+    arr.map((el) =>
+      limit(async () => {
+        const page = await browser.newPage();
+        try {
+          const result = await parser(page, {
+            url: el.url,
+            isUserListElement: true,
+          });
+          // console.log(result);
+          return result;
+        } catch (error) {
+          return { action: false, error };
+        } finally {
+          await page.close();
+        }
+      })
+    )
   );
 
-  return resp;
-};
+  await browser.close();
 
-const getSingleProduct = async (url) => {
-  try {
-    const r = await parser({ url, isUserListElement: false });
-    return r;
-  } catch (error) {
-    return { action: false, error };
-  }
-};
+  // console.log(results);
+
+  return results;
+  //   .map((r) =>
+  //   r.status === "fulfilled" ? r.value : { action: false }
+  // );
+}
+
+async function getSingleProduct(url) {
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  const page = await browser.newPage();
+
+  const result = await parser(page, {
+    url,
+    isUserListElement: false,
+  });
+
+  await page.close();
+  await browser.close();
+
+  return result;
+}
 
 module.exports = { getProducts, getSingleProduct };

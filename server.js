@@ -20,6 +20,9 @@ const {
 const User = require("./lib/models/user.js");
 const Product = require("./lib/models/product.js");
 
+/* TPM DATA */
+const tpm_data = require("./data.js");
+
 const { DB_KEY } = process.env;
 
 mongoose.set("strictQuery", true);
@@ -89,25 +92,71 @@ bot.on("callback_query", async (msg) => {
   /* SEARCH PRODUCTS WITH PHOTO */
 
   if (msg.data === "photo") {
-    const userFavoriteProducts = await searchMessageHandler({
+    let userFavoriteProducts = await searchMessageHandler({
       bot,
       msg,
       Product,
       User,
     });
 
-    if (!userFavoriteProducts) return;
+    console.log(userFavoriteProducts);
+
+    async function chunkProducts(data) {
+      let tmpProducts = data;
+
+      if (!tmpProducts) return;
+      const chunked = [];
+
+      // devided into 10
+      // const chunked = chunk(userFavoriteProducts, 10);
+      if (tmpProducts.length > 10) {
+        for (let i = 0; i < tmpProducts.length; i += 10) {
+          chunked.push(tmpProducts.slice(i, i + 10));
+        }
+      }
+
+      return chunked;
+    }
+
+    async function parseProducts(arr) {
+      console.log(arr);
+      const fetchedProducts = [];
+      for (let i = 0; i < arr.length; ++i) {
+        let fetchedProduct = await getProducts(arr[i]);
+        fetchedProducts.push(fetchedProduct);
+      }
+
+      const normalizedProducts = fetchedProducts.flat();
+      console.log("normalizedProducts:", normalizedProducts);
+      return fetchedProducts;
+    }
 
     setTimeout(async () => {
       const startDate = new Date();
 
       startProcessMessage({ startDate, msg, searchBy: "photo" });
 
-      const fetchedProducts = await getProducts(userFavoriteProducts);
+      // const fetchedProducts = await getProducts(userFavoriteProducts);
 
-      const actionProducts = fetchedProducts.filter(
+      // const actionProducts = await parseProducts(userFavoriteProducts).filter(
+      //   (prod) => prod.value.action
+      // );
+
+      const chunkedProducts = await chunkProducts(userFavoriteProducts);
+      console.log("chunkedProducts:", chunkedProducts);
+
+      const chunkedActionProducts = await parseProducts(chunkedProducts);
+      console.log("actionProducts:", chunkedActionProducts);
+
+      userFavoriteProducts = chunkedActionProducts.flat();
+
+      const actionProducts = userFavoriteProducts.filter(
         (prod) => prod.value.action
       );
+
+      // const actionProducts = fetchedProducts.filter(
+      //   (prod) => prod.value.action
+      // );
 
       const time = timeMessage(startDate);
 
