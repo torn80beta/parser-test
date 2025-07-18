@@ -6,8 +6,6 @@ async function parseProducts(arr, getProducts) {
     fetchedProducts.push(fetchedProduct);
   }
 
-  // const normalizedProducts = fetchedProducts.flat();
-  // console.log("normalizedProducts:", normalizedProducts);
   return fetchedProducts;
 }
 

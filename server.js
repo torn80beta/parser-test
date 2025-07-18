@@ -101,8 +101,10 @@ bot.on("callback_query", async (msg) => {
       User,
     });
 
+    /*  TEST start */
     // let userFavoriteProducts = tpm_data[2].products;
     // console.log(userFavoriteProducts.length);
+    /*  TEST end */
 
     if (!userFavoriteProducts || userFavoriteProducts.length === 0) {
       await bot.sendMessage(msg.from.id, "🤖 У вашому списку немає товарів.");

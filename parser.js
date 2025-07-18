@@ -10,12 +10,16 @@ async function fetchHtmlWithPage(page, url) {
       "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
   );
 
-  await page.setExtraHTTPHeaders({
-    "Accept-Language": "en-US,en;q=0.9,uk;q=0.8",
-    Referer: "https://www.google.com/",
-  });
+  /* Anti bot protection test start */
 
-  await page.setViewport({ width: 1366, height: 768 });
+  // await page.setExtraHTTPHeaders({
+  //   "Accept-Language": "en-US,en;q=0.9,uk;q=0.8",
+  //   Referer: "https://www.google.com/",
+  // });
+
+  // await page.setViewport({ width: 1366, height: 768 });
+
+  /* Anti bot protection test end */
 
   const serverResponse = await page.goto(url, {
     waitUntil: "networkidle2",
@@ -26,18 +30,10 @@ async function fetchHtmlWithPage(page, url) {
     throw new Error(`Page load failed: ${serverResponse?.status()} ${url}`);
   }
 
-  // Подождать, если нужно, но меньше
-  // await page.waitForTimeout(1000);
-  // await new Promise((r) => setTimeout(r, 3000));
-  // await page.waitForSelector({
-  //   selector: "#productMain",
-  //   options: { timeout: 3000 },
-  // });
-  await page.waitForSelector("#productMain", { timeout: 3000 });
+  await page.waitForSelector("#productMain", { timeout: 5000 });
 
   return await page.content();
 }
-
 async function parser(page, { url, isUserListElement }) {
   try {
     const html = await fetchHtmlWithPage(page, url);
@@ -57,9 +53,6 @@ async function parser(page, { url, isUserListElement }) {
     const title = $("h1.page-title").text();
     const image = $("#productMain picture img").attr("src");
     const code = $("#productMain .custom-tag__text strong").text();
-
-    // console.log(title);
-    // console.log(isAction);
 
     const regularPrice = isAction
       ? parseFloat(
@@ -103,7 +96,8 @@ async function parser(page, { url, isUserListElement }) {
 
 async function getProducts(arr) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false, //anti bot protection test
+    headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
@@ -134,9 +128,6 @@ async function getProducts(arr) {
   // console.log(results);
 
   return results;
-  //   .map((r) =>
-  //   r.status === "fulfilled" ? r.value : { action: false }
-  // );
 }
 
 async function getSingleProduct(url) {
