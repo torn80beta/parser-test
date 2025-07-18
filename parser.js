@@ -149,4 +149,4 @@ async function getSingleProduct(url) {
   return result;
 }
 
-module.exports = { getProducts, getSingleProduct };
+module.exports = { getProducts, getSingleProduct, CONCURRENCY_LIMIT };

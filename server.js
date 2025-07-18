@@ -22,8 +22,7 @@ const {
 const User = require("./lib/models/user.js");
 const Product = require("./lib/models/product.js");
 
-/* TPM DATA */
-const tpm_data = require("./data.js");
+// const tpm_data = require("./data.js"); // Data for testing
 
 const { DB_KEY } = process.env;
 
