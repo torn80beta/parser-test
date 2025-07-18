@@ -4,6 +4,8 @@ const handleMongooseError = require("./handleMongooseError");
 const { startProcessMessage, endProcessMessage } = require("./logMessages");
 const searchMessageHandler = require("./searchMessageHandler");
 const urlHandler = require("./urlHandler");
+const chunkProducts = require("./chunkProducts");
+const parseProducts = require("./parseProducts");
 
 module.exports = {
   timeMessage,
@@ -13,4 +15,6 @@ module.exports = {
   endProcessMessage,
   searchMessageHandler,
   urlHandler,
+  chunkProducts,
+  parseProducts,
 };
