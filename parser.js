@@ -7,7 +7,7 @@ const CONCURRENCY_LIMIT = 10;
 async function fetchHtmlWithPage(page, url) {
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
   );
 
   /* Anti bot protection test start */
@@ -34,6 +34,7 @@ async function fetchHtmlWithPage(page, url) {
 
   return await page.content();
 }
+
 async function parser(page, { url, isUserListElement }) {
   try {
     const html = await fetchHtmlWithPage(page, url);
@@ -56,21 +57,21 @@ async function parser(page, { url, isUserListElement }) {
 
     const regularPrice = isAction
       ? parseFloat(
-          $("#productMain data.product-price__bottom span").text().trim()
+          $("#productMain data.product-price__bottom span").text().trim(),
         ).toFixed(2)
       : parseFloat(
-          $("#productMain data.product-price__top").text().trim()
+          $("#productMain data.product-price__top").text().trim(),
         ).toFixed(2);
 
     const actionPrice =
       isAction && isUserListElement
         ? parseFloat(
-            $("#productMain data.product-price__top").text().trim()
+            $("#productMain data.product-price__top").text().trim(),
           ).toFixed(2)
         : null;
 
     const atbCardPriceSelector = parseFloat(
-      $("#productMain data.atbcard-sale__price-top span").text().trim()
+      $("#productMain data.atbcard-sale__price-top span").text().trim(),
     ).toFixed(2);
 
     const atbCardPrice =
@@ -112,15 +113,15 @@ async function getProducts(arr) {
             url: el.url,
             isUserListElement: true,
           });
-          // console.log(result);
+          console.log(result);
           return result;
         } catch (error) {
           return { action: false, error };
         } finally {
           await page.close();
         }
-      })
-    )
+      }),
+    ),
   );
 
   await browser.close();
